@@ -88,6 +88,8 @@
 
 @import "./themes/dark.css";
 @import "./themes/light.css";
+@import "./themes/purple.css";
+@import "./themes/darkblue.css";
 
 input:-webkit-autofill,
 input:-webkit-autofill:focus,

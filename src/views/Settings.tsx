@@ -9,6 +9,8 @@ import FloatingPanel from '../components/FloatingPanel.js'
 
 import * as styleFunctions from '../functions/styleFunctions.js'
 
+import {config} from "../config.ts"
+
 const Settings = () => {
 
   const navigateTo = useNavigate()
@@ -21,6 +23,8 @@ const Settings = () => {
   const [formData, setFormData] = useState(user)
   const [showFileUpload, setShowFileUpload] = useState<boolean>(false)
   const [photo, setPhoto] = useState<any>()
+
+  const themes = config.themes
 
 
   const updateUser = async ()=>{
@@ -69,9 +73,9 @@ const Settings = () => {
                   <div className="flex flex-col w-full mb-3">
                     <label>Theme:</label>
                     <select value={theme} onChange={((e)=>dispatch(setTheme(e.target.value)))}>
-                      <option value="root">Default</option>
-                      <option value="dark">Dark</option>
-                      <option value="light">Light</option>
+                      {themes.length>0 && themes.map((item:any)=>(
+                        <option key={item.id} value={item.name}>{item.label}</option>
+                      ))}
                     </select>
                   </div>
                 

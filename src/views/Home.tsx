@@ -27,7 +27,7 @@ const Home = () => {
   return (
     <div className="flex w-full h-[100%]">
 
-      {modules && modules.map((item)=>(
+      {modules && modules.map((item:any)=>(
         <div 
           key={item.id}
           className="card-vertical flex-col m-5"

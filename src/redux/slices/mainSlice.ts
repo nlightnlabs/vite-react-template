@@ -26,8 +26,8 @@ const initialState:PropTypes = {
   logo: config.logo,
   pages: [],
   currentPage: "home",
-  currentModule: null,
-  currentView: null,
+  currentModule: config.modules[0],
+  currentView: config.modules[0].views[0],
   appData: {},
   history: []
 };

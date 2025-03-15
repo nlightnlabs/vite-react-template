@@ -6,6 +6,8 @@ import * as styleFunctions from "../functions/styleFunctions.js";
 import {useDispatch} from 'react-redux'
 import {setTheme} from '../redux/slices/mainSlice.js'
 
+import {config} from '../config.ts'
+
 const HeaderNavigation = () => {
 
     
@@ -14,6 +16,8 @@ const HeaderNavigation = () => {
     const [showThemeOptions, setShowThemeOptions] = useState(false)
     const [hoveredItem, setHoveredItem] = useState<any>(null)
     const [selectedItem, setSelectedItem] = useState<any>(null)
+
+    const themes:any = config.themes
 
     const dispatch = useDispatch()
     
@@ -94,10 +98,12 @@ const HeaderNavigation = () => {
                     <div 
                         className={`absolute w-[150px] h-auto z-[999] rounded-md shadow-md right-0 choice-list p-3`}
                         onMouseLeave={()=>setShowThemeOptions(false)}
-                    >
-                        <div className={`choice-list-item`} onClick={()=>handleChangeTheme("default")}>Default</div>
-                        <div className={`choice-list-item`} onClick={()=>handleChangeTheme("dark")}>Dark</div>
-                        <div className={`choice-list-item`} onClick={()=>handleChangeTheme("light")}>Light</div>
+                    >{themes.length>0 && 
+                        themes.map((item:any)=>(
+                            <div key={item.id} className={`choice-list-item`} onClick={()=>handleChangeTheme(item.name)}>{item.label}</div>
+                        ))
+                    }
+                        
                     </div>
                 }
             </div>

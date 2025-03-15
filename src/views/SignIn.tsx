@@ -21,7 +21,7 @@ const SignIn = () => {
   const authenticateUser = async ()=>{
 
     const response = await mainApi.authenticateUser(formData)
-    console.log(response)
+    
     if(response.validation){
       dispatch(setUserAuthenticated(true))
       dispatch(setCurrentUser(response.user_info))
