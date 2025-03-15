@@ -1,0 +1,132 @@
+.fade-in {
+  animation: fadeIn 0.5s ease-in forwards;
+  opacity: 0;
+}
+
+.fade-out {
+animation: fadeOut 0.5s ease-out forwards;
+opacity: 1;
+}
+
+@keyframes fadeIn {
+0% { opacity: 0; }
+100% { opacity: 1; }
+}
+
+@keyframes fadeOut {
+0% { opacity: 1; }
+100% { opacity: 0; }
+}
+
+.slide-in {
+animation: slideIn 0.5s ease-in forwards;
+transform: translateX(-100%);
+}
+
+@keyframes slideIn {
+0% { transform: translateX(-100%); }
+100% { transform: translateX(0); }
+}
+
+.slide-out {
+animation: slideOut 0.5s ease-out forwards;
+}
+
+@keyframes slideOut {
+0% { transform: translateX(0); }
+100% { transform: translateX(100%); }
+}
+
+.scale-up {
+animation: scaleUp 0.5s ease-in forwards;
+transform: scale(0);
+}
+
+@keyframes scaleUp {
+0% { transform: scale(0); }
+100% { transform: scale(1); }
+}
+
+.scale-down {
+animation: scaleDown 0.5s ease-out forwards;
+}
+
+@keyframes scaleDown {
+0% { transform: scale(1); }
+100% { transform: scale(0); }
+}
+
+.rotate {
+animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+.bounce {
+animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-20px); }
+}
+
+.shake {
+animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+0%, 100% { transform: translateX(0); }
+25% { transform: translateX(-10px); }
+50% { transform: translateX(10px); }
+75% { transform: translateX(-10px); }
+}
+
+.pulse {
+animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.1); }
+100% { transform: scale(1); }
+}
+
+.float-up {
+animation: floatUp var(--duration, 1s) ease-in-out;
+}
+
+@keyframes floatUp {
+0% { opacity: 0; transform: translateY(var(--distance, -20px))}
+100% { opacity: 1;}
+}
+
+.float-down {
+animation: floatDown var(--duration, 1s) ease-in-out;
+}
+
+@keyframes floatDown {
+0% { opacity: 0; transform: translateY(var(--distance, 20px))}
+100% { opacity: 1;}
+}
+
+.float-left {
+animation: floatLeft var(--duration, 1s) ease-in-out;
+}
+
+@keyframes floatLeft {
+0% { opacity: 0; transform: translateX(var(--distance, -20px))}
+100% { opacity: 1;}
+}
+
+.float-right {
+animation: floatRight var(--duration, 1s) ease-in-out;
+}
+
+@keyframes floatRight {
+0% { opacity: 0; transform: translateX(var(--distance, 20px))}
+100% { opacity: 1;}
+}

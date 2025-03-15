@@ -1,0 +1,33 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        body{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+        }
+    </style>
+    <title>Document</title>
+
+    <script>
+        const getIpAddress = async ()=>{
+            const response = await fetch('https://api.ipify.org?format=json');
+            const value = await response.json();
+            const  clientIPAddress= await value.ip;
+            document.getElementById("clientIP").innerText = clientIPAddress;
+            document.getElementById("now").innerText = new Date();
+        }
+        getIpAddress();
+        
+
+    </script>
+ 
+</head>
+<body>
+    <p>Webserver <span style="color: rgb(0,220,0);">Running</span> For</p>
+    <h1>{{appName}}</h1>
+</body>
+</html>
