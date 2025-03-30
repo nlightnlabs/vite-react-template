@@ -46,10 +46,10 @@ const App = () => {
     });
   }
 
-  useEffect(()=>{
-    console.log("User Authenticated",userAuthenticated)
-    console.log("Current User:",user)
-  },[])
+  // useEffect(()=>{
+  //   console.log("User Authenticated",userAuthenticated)
+  //   console.log("Current User:",user)
+  // },[])
 
   useEffect(()=>{
     changeTheme(theme)

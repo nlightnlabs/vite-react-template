@@ -16,7 +16,7 @@ import uvicorn
 
 
 #Libraries for asynchronouse api calls
-from fastapi import FastAPI, Request, HTTPException, Depends, Query, UploadFile, File, Form
+from fastapi import FastAPI, Request, HTTPException, Depends, Query, UploadFile, File, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, ORJSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -134,6 +134,13 @@ async def render_page(request: Request, page: str = "index"):
         return HTMLResponse(content="Page not found", status_code=404)
 
 
+
+@app.post("/utils/hashPassword")
+async def hash_password_endpoint(password: str = Body(...)):
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    return {"hashed": hashed.decode("utf-8")}
+
+
 # Connection Pool Storage (Global for Reuse)
 db_pools = {}
 
@@ -158,26 +165,26 @@ async def get_db_connection(dbName: str = PGDATABASE):
         yield connection  # Ensures proper cleanup after request
 
 
-# Fetch List of All Tables in the Database
-async def get_list_of_tables(db: asyncpg.Connection):
-    query = """
-    SELECT schemaname || '.' || tablename AS full_table_name
-    FROM pg_tables
-    WHERE schemaname NOT IN ('pg_catalog', 'information_schema');
-    """
-    result = await db.fetch(query)
-    print([row["full_table_name"] for row in result])
+# Fetch List of All Tables in the Database (with optional schema)
+async def get_list_of_tables(db: asyncpg.Connection, schema: Optional[str] = None):
+    if schema:
+        query = """
+        SELECT schemaname || '.' || tablename AS full_table_name
+        FROM pg_tables
+        WHERE schemaname = $1;
+        """
+        result = await db.fetch(query, schema)
+    else:
+        query = """
+        SELECT schemaname || '.' || tablename AS full_table_name
+        FROM pg_tables
+        WHERE schemaname NOT IN ('pg_catalog', 'information_schema');
+        """
+        result = await db.fetch(query)
+
     return [row["full_table_name"] for row in result]
 
 
-# Request Model for Database Query
-class QueryRequest(BaseModel):
-    tableName: Optional[str] = None
-    columns: Optional[List[str]] = None
-    values: Optional[List[Any]] = None
-    whereClause: Optional[str] = None
-    query: Optional[str] = None
-    dbName: Optional[str] = PGDATABASE
 
 
 def serialize_value(value):
@@ -191,35 +198,48 @@ def serialize_value(value):
     return value  
 
 
+# Request Model for Database Query
+class QueryRequest(BaseModel):
+    dbName: Optional[str] = PGDATABASE
+    schema: Optional[str] = "public"
+    tableName: Optional[str] = None
+    columns: Optional[List[str]] = None
+    values: Optional[List[Any]] = None
+    whereClause: Optional[str] = None
+    query: Optional[str] = None
+
+
 @app.post("/db/query")
 async def db_query(request: QueryRequest):
     print("db/query")
     print(request)
 
     try:
-        # Dynamically get dbName from the request body
         dbName = request.dbName or PGDATABASE
-        print("Using dbName:", dbName)
-
-        # Get connection pool and acquire a connection
         pool = await get_db_pool(dbName)
-        async with pool.acquire() as db:
 
-            allowableTables = await get_list_of_tables(db)
+        async with pool.acquire() as db:
+            allowableTables = await get_list_of_tables(db, request.schema)
+
+            # Compose full table name with schema if provided
+            full_table_name = (
+                f"{request.schema}.{request.tableName}" if request.schema and request.tableName
+                else request.tableName
+            )
 
             if request.tableName:
-                if request.tableName not in allowableTables:
-                    raise HTTPException(status_code=400, detail=f"Table '{request.tableName}' does not exist.")
+                if full_table_name not in allowableTables:
+                    raise HTTPException(status_code=400, detail=f"Table '{full_table_name}' does not exist.")
 
                 selected_columns = ", ".join(request.columns) if request.columns else "*"
-                query = f"SELECT {selected_columns} FROM {request.tableName} LIMIT 100;"
+                query = f"SELECT {selected_columns} FROM {full_table_name} LIMIT 100;"
             else:
                 query = request.query
 
             response = await db.fetch(query)
 
             serialized_response = [
-                {key: serialize_value(value) for key, value in dict(row).items()} 
+                {key: serialize_value(value) for key, value in dict(row).items()}
                 for row in response
             ]
 
@@ -231,292 +251,407 @@ async def db_query(request: QueryRequest):
 
 
 
-#Add records in a database table
+#Insert a new record into database
 @app.post("/db/insert")
-async def insert_record(request: QueryRequest, db: asyncpg.Connection = Depends(get_db_connection)):
-
+async def insert_record(request: QueryRequest):
     """
-    Example body in api request:
-        {
-            "tableName": "employees", 
-            "columns": ["name", "position"], 
-            "values": ["Alice", "Developer"], 
-            "dbName": "oomnielabs"
-        }
+    Example request body:
+    {
+        "schema": "public",
+        "tableName": "employees", 
+        "columns": ["name", "position"], 
+        "values": ["Alice", "Developer"], 
+        "dbName": "main"
+    }
     """
 
     try:
-        # Get valid table names
-        allowableTables = await get_list_of_tables(db)
+        # Fallback to default DB if not provided
+        dbName = request.dbName or PGDATABASE
 
-        # Validate table
-        if request.tableName not in allowableTables:
-            raise HTTPException(status_code=400, detail=f"Table '{request.tableName}' does not exist.")
+        # Get a DB connection from the correct pool
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
 
-        # Validate columns & values
-        if not request.columns or not isinstance(request.values, list) or len(request.columns) != len(request.values):
-            raise HTTPException(status_code=400, detail="Columns and values must be provided as equal-length lists.")
+            # Validate tables
+            allowableTables = await get_list_of_tables(db, request.schema)
+            full_table_name = (
+                f"{request.schema}.{request.tableName}" if request.schema and request.tableName
+                else request.tableName
+            )
 
-        # Construct INSERT statement
-        columns = ", ".join(request.columns)
-        placeholders = ", ".join(f"${i+1}" for i in range(len(request.values)))  # Use parameterized query
-        query = f"INSERT INTO {request.tableName} ({columns}) VALUES ({placeholders}) RETURNING *;"
-        
-        # Execute query
-        response = await db.fetchrow(query, *request.values)
+            if full_table_name not in allowableTables:
+                raise HTTPException(status_code=400, detail=f"Table '{full_table_name}' does not exist.")
 
-        print(response)
-        print(type(response))
+            if not request.columns or not isinstance(request.values, list) or len(request.columns) != len(request.values):
+                raise HTTPException(status_code=400, detail="Columns and values must be provided as equal-length lists.")
 
-        # ✅ Convert asyncpg.Record to dictionary with serialized values
-        serialized_response = {key: serialize_value(value) for key, value in dict(response).items()}
+            # Build query
+            columns = ", ".join(request.columns)
+            placeholders = ", ".join(f"${i+1}" for i in range(len(request.values)))
+            query = f"INSERT INTO {full_table_name} ({columns}) VALUES ({placeholders}) RETURNING *;"
 
-        return JSONResponse(content=dict(serialized_response))
+            # Execute
+            response = await db.fetchrow(query, *request.values)
+
+            # Serialize
+            serialized_response = {key: serialize_value(value) for key, value in dict(response).items()}
+            return JSONResponse(content=serialized_response)
 
     except Exception as e:
         print(f"Database Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Database error occurred\n: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error occurred: {str(e)}")
+
 
 
 
 #Update records in a database table
 @app.post("/db/update")
-async def update_record(request: QueryRequest, db: asyncpg.Connection = Depends(get_db_connection)):
-
-    print(request)
-
+async def update_record(request: QueryRequest):
     """
     Example body in API request:
-        {
-            "tableName": "employees", 
-            "columns": ["position"], 
-            "values": ["Senior Developer"], 
-            "whereClause": "name = 'Alice'", 
-            "dbName": "oomnielabs"
-        }
+    {
+        "dbName": "main",
+        "schema": "public",
+        "tableName": "employees", 
+        "columns": ["position"], 
+        "values": ["Senior Developer"], 
+        "whereClause": "name = 'Alice'"
+    }
     """
+    print(request)
+
     try:
-        # Get valid table names
-        allowableTables = await get_list_of_tables(db)
+        # Pull dbName from the request or use default
+        dbName = request.dbName or PGDATABASE
 
-        # Validate table
-        if request.tableName not in allowableTables:
-            raise HTTPException(status_code=400, detail=f"Table '{request.tableName}' does not exist.")
+        # Acquire connection from the correct pool
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
 
-        # Validate columns & values
-        if not request.columns or not isinstance(request.values, list) or len(request.columns) != len(request.values):
-            raise HTTPException(status_code=400, detail="Columns and values must be provided as equal-length lists.")
+            # Get valid tables for schema
+            allowableTables = await get_list_of_tables(db, request.schema)
 
-        # Validate WHERE condition
-        if not request.whereClause:
-            raise HTTPException(status_code=400, detail="A WHERE condition is required for updates.")
+            # Build full table name
+            full_table_name = (
+                f"{request.schema}.{request.tableName}" if request.schema and request.tableName
+                else request.tableName
+            )
 
-        # Construct UPDATE statement
-        set_clause = ", ".join(f"{col} = ${i+1}" for i, col in enumerate(request.columns))
-        query = f"UPDATE {request.tableName} SET {set_clause} WHERE {request.whereClause} RETURNING *;"
+            # Validate the table exists
+            if full_table_name not in allowableTables:
+                raise HTTPException(status_code=400, detail=f"Table '{full_table_name}' does not exist.")
 
-        # Execute query and fetch updated values
-        response = await db.fetch(query, *request.values)
+            # Validate columns and values
+            if not request.columns or not isinstance(request.values, list) or len(request.columns) != len(request.values):
+                raise HTTPException(status_code=400, detail="Columns and values must be provided as equal-length lists.")
 
-        if not response:
-            raise HTTPException(status_code=404, detail="No matching record found to update.")
-        
-        updated_record = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
+            # Validate WHERE clause
+            if not request.whereClause:
+                raise HTTPException(status_code=400, detail="A WHERE condition is required for updates.")
 
-        return JSONResponse(content=updated_record[0])
+            # Build SET clause
+            set_clause = ", ".join(f"{col} = ${i+1}" for i, col in enumerate(request.columns))
+            query = f"UPDATE {full_table_name} SET {set_clause} WHERE {request.whereClause} RETURNING *;"
+
+            # Execute query
+            response = await db.fetch(query, *request.values)
+
+            if not response:
+                raise HTTPException(status_code=404, detail="No matching record found to update.")
+
+            updated_record = [
+                {key: serialize_value(value) for key, value in dict(row).items()}
+                for row in response
+            ]
+
+            return JSONResponse(content=updated_record[0])
 
     except Exception as e:
         print(f"Database Error: {e}")
         raise HTTPException(status_code=500, detail=f"Database error occurred: {str(e)}")
+
 
 
 #Delete records from a database table
 @app.delete("/db/delete")
-async def delete_record(request: QueryRequest, db: asyncpg.Connection = Depends(get_db_connection)):
+async def delete_record(request: QueryRequest):
     """
-    Example delete record:
+    Example delete request:
     {
+        "dbName": "main",
+        "schema": "public",
         "tableName": "employees", 
-        "whereClause": "name = 'Alice'", 
-        "dbName": "oomnielabs"
+        "whereClause": "name = 'Alice'"
     }
     """
-    
     try:
-        # Get valid table names
-        allowableTables = await get_list_of_tables(db)
+        # Use provided dbName or default
+        dbName = request.dbName or PGDATABASE
 
-        # Validate table
-        if request.tableName not in allowableTables:
-            raise HTTPException(status_code=400, detail=f"Table '{request.tableName}' does not exist.")
+        # Acquire connection from pool
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
 
-        # Validate WHERE condition
-        if not request.whereClause:
-            raise HTTPException(status_code=400, detail="A WHERE condition is required for deletions.")
+            # Get list of tables for schema
+            allowableTables = await get_list_of_tables(db, request.schema)
 
-        # Construct DELETE statement
-        query = f"DELETE FROM {request.tableName} WHERE {request.whereClause} RETURNING *;"
+            # Compose full table name
+            full_table_name = (
+                f"{request.schema}.{request.tableName}" if request.schema and request.tableName
+                else request.tableName
+            )
 
-        # Execute query
-        response = await db.fetch(query)
+            # Validate table existence
+            if full_table_name not in allowableTables:
+                raise HTTPException(status_code=400, detail=f"Table '{full_table_name}' does not exist.")
 
-        # Convert asyncpg.Record to list of dictionaries with serialized values
-        serialized_response = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
+            # Validate WHERE clause
+            if not request.whereClause:
+                raise HTTPException(status_code=400, detail="A WHERE condition is required for deletions.")
 
-        return JSONResponse(content=[dict(row) for row in serialized_response])
+            # Construct DELETE query
+            query = f"DELETE FROM {full_table_name} WHERE {request.whereClause} RETURNING *;"
+
+            # Execute
+            response = await db.fetch(query)
+
+            # Serialize
+            serialized_response = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
+
+            return JSONResponse(content=serialized_response)
 
     except Exception as e:
         print(f"Database Error: {e}")
         raise HTTPException(status_code=500, detail=f"Database error occurred: {str(e)}")
 
 
-# Pydantic Model for Request Validation
-class AuthRequest(BaseModel):
+
+
+# Unified request model
+class UserModel(BaseModel):
     username: str
-    pwd: str
+    password: str
+    dbName: Optional[str] = PGDATABASE
+    schema: Optional[str] = "public"
 
 
-# FastAPI Route to Authenticate User
 @app.post("/db/authenticateUser")
-async def authenticate_user(request: AuthRequest, db=Depends(get_db_connection)):
+async def authenticate_user(request: Request):
     try:
-        # Fetch stored hashed password from the database
-        query = "SELECT * FROM users WHERE username = $1;"
-        user_record = await db.fetchrow(query, request.username)
+        # Parse the incoming request body
+        body = await request.json()
+        auth_data = UserModel(**body)
 
-        if not user_record:
-            return {"validation": False, "message": "Invalid username or password"}
+        # Manually get a DB connection from the correct pool
+        pool = await get_db_pool(auth_data.dbName)
+        async with pool.acquire() as db:
 
-        stored_hashed_password = user_record["pwd"]
+            # Build the table name dynamically
+            full_table_name = f"{auth_data.schema}.users"
 
-        # Verify the password using bcrypt
-        if bcrypt.checkpw(request.pwd.encode("utf-8"), stored_hashed_password.encode("utf-8")):
-            user = dict(user_record)  # Convert asyncpg Record to a dictionary
+            # Query to retrieve the user record
+            query = f"SELECT * FROM {full_table_name} WHERE username = $1;"
+            print(query)
+            user_record = await db.fetchrow(query, auth_data.username)
+            print(user_record)
 
-            user.pop("pwd", None)  # Removes "pwd" if it exists, avoids KeyError
+            if not user_record:
+                return JSONResponse({"validation": False, "message": "Invalid username or password"})
 
-            # Ensure values are serializable (e.g., convert datetime, UUIDs)
-            sanitized_user_info = {key: str(value) if isinstance(value, (bytes, memoryview)) else value for key, value in user.items()}
-            
-            return {"validation": True, "user": sanitized_user_info}
+            stored_hashed_password = user_record["password"]
 
-        else:
-            return {"validation": False, "message": "Invalid username or password"}
+            # Validate password
+            if bcrypt.checkpw(auth_data.password.encode("utf-8"), stored_hashed_password.encode("utf-8")):
+                user = dict(user_record)
+                user.pop("password", None)
+
+                # Serialize any complex types
+                sanitized_user_info = {
+                    key: serialize_value(value)
+                    for key, value in user.items()
+                }
+
+                return JSONResponse({"validation": True, "user": sanitized_user_info})
+
+            return JSONResponse({"validation": False, "message": "Invalid username or password"})
 
     except Exception as e:
-        print(f"Database Error: {e}")
+        print(f"Authentication Error: {e}")
         raise HTTPException(status_code=500, detail="Database error occurred")
     
 
 #Create a new user
+
+    try:
+        # Parse request body as raw dictionary
+        body: Dict[str, Any] = await request.json()
+
+        # Extract required metadata using your existing UserModel model
+        meta = UserModel(**body)
+
+        dbName = meta.dbName or PGDATABASE
+        schema = meta.schema or "public"
+        full_table_name = f"{schema}.users"
+
+        # Ensure required fields
+        if not meta.username or not meta.password:
+            return JSONResponse({"validation": False, "message": "username and password are required"})
+
+        # Hash the password
+        body["password"] = hash_password(meta.password)
+
+        # Prepare query parts
+        columns = list(body.keys())
+        values = list(body.values())
+        placeholders = ", ".join(f"${i+1}" for i in range(len(values)))
+        column_clause = ", ".join(columns)
+        query = f"INSERT INTO {full_table_name} ({column_clause}) VALUES ({placeholders}) RETURNING *;"
+
+        # Connect and execute
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
+            result = await db.fetchrow(query, *values)
+
+        # Prepare response
+        inserted_user = dict(result)
+        inserted_user.pop("password", None)
+
+        return JSONResponse({"validation": True, "user": inserted_user})
+
+    except Exception as e:
+        print(f"Create User Error: {e}")
+        return JSONResponse({"validation": False, "message": f"Error occurred: {str(e)}"})
+
+
+#Create a new user
 @app.post("/db/createUser")
-async def create_user(request: Request, db=Depends(get_db_connection)):
-    
-    # Local definitions inside the endpoint
-    class CreateUserRequest(BaseModel):
-        username: str
-        pwd: str
-        dbName: str = PGDATABASE
-
-    def hash_password(plain_password: str) -> str:
-        """Hash a plain password using bcrypt."""
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(plain_password.encode("utf-8"), salt)
-        return hashed.decode("utf-8")
-
-    # Manually parse and validate the JSON body using the local Pydantic model
+async def create_user(request: Request):
     try:
-        body = await request.json()
-        user_data = CreateUserRequest(**body)
+        body: Dict[str, Any] = await request.json()
+        meta = UserModel(**body)
+
+        dbName = meta.dbName or PGDATABASE
+        schema = meta.schema or "public"
+        full_table_name = f"{schema}.users"
+
+        if not meta.username or not meta.password:
+            return JSONResponse({"validation": False, "message": "username and password are required"})
+
+        columns = list(body.keys())
+        values = list(body.values())
+        placeholders = ", ".join(f"${i+1}" for i in range(len(values)))
+        column_clause = ", ".join(columns)
+        query = f"INSERT INTO {full_table_name} ({column_clause}) VALUES ({placeholders}) RETURNING *;"
+
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
+            result = await db.fetchrow(query, *values)
+
+        inserted_user = dict(result)
+        inserted_user.pop("password", None)
+
+        return JSONResponse({"validation": True, "user": inserted_user})
+
     except Exception as e:
-        return JSONResponse({"validation": "false", "message": str(e)})
-
-    print(f"Creating user: {user_data.username}")
-    print(f"Target DB: {user_data.dbName}")
-    try:
-        # Check if the username already exists
-        existing_user = await db.fetchrow("SELECT * FROM users WHERE username = $1", user_data.username)
-        if existing_user:
-            return JSONResponse({"validation": "false", "message": "Username already exists"})
-
-        # Hash the provided password
-        hashed_pwd = hash_password(user_data.pwd)
-
-        # Insert the new user into the database
-        await db.execute(
-            "INSERT INTO users (username, pwd) VALUES ($1, $2)",
-            user_data.username, hashed_pwd
-        )
+        print(f"Create User Error: {e}")
+        return JSONResponse({"validation": False, "message": f"Error occurred: {str(e)}"})
         
-        return JSONResponse({"validation": "true", "message": "User created successfully"})
-    
-    except Exception as e:
-        return JSONResponse({"validation": "false", "message": f"Error occurred: {str(e)}"})
-    
 
 # Define a Pydantic model for password reset
-class ResetPasswordRequest(BaseModel):
-    username: str
-    new_password: str
-
-# Define a Pydantic model for editing a user record
-class EditUserRequest(BaseModel):
-    username: str
-    updates: dict  # Example: {"email": "newemail@example.com", "role": "admin"}
-
+class ResetPasswordRequest(UserModel):
+    newPassword: str
 
 # Endpoint to reset password
 @app.post("/db/resetPassword")
-async def reset_password(request: ResetPasswordRequest, db=Depends(get_db_connection)):
+async def reset_password(request: ResetPasswordRequest):
     try:
-        # Hash the new password before storing
-        hashed_password = bcrypt.hashpw(request.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        # Pull metadata
+        dbName = request.dbName or PGDATABASE
+        schema = request.schema or "public"
+        full_table_name = f"{schema}.users"
 
-        query = """
-            UPDATE users
-            SET pwd = $1
-            WHERE username = $2
-            RETURNING *;
+        if not request.username or not request.newPassword:
+            return JSONResponse({"validation": False, "message": "username and newPassword are required"})
+
+        # Build update query – let Postgres handle hashing (via crypt() or trigger)
+        query = f"""
+        UPDATE {full_table_name}
+        SET password = $1
+        WHERE username = $2
+        RETURNING *;
         """
 
-        user = await db.fetchrow(query, hashed_password, request.username)
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
+            updated_user = await db.fetchrow(query, request.newPassword, request.username)
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        if not updated_user:
+            return JSONResponse({"validation": False, "message": "User not found or update failed"})
 
-        return {"message": "Password updated successfully"}
-    
+        user = dict(updated_user)
+        user.pop("password", None)
+
+        return JSONResponse({"validation": True, "message": "Password reset successful", "user": user})
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating password: {str(e)}")
+        print(f"Reset Password Error: {e}")
+        return JSONResponse({"validation": False, "message": f"Error occurred: {str(e)}"})
 
 
 # Endpoint to edit user record
+class EditUserRequest(UserModel):
+    updates: Dict[str, Any]
+
 @app.post("/db/editUser")
-async def edit_user(request: EditUserRequest, db=Depends(get_db_connection)):
+async def edit_user(request: EditUserRequest):
     try:
-        # Ensure there are updates
-        if not request.updates:
-            raise HTTPException(status_code=400, detail="No updates provided")
+        dbName = request.dbName or PGDATABASE
+        schema = request.schema or "public"
+        full_table_name = f"{schema}.users"
 
-        # Construct SET clause dynamically
-        set_clause = ", ".join(f"{key} = ${i+1}" for i, key in enumerate(request.updates.keys()))
+        if not request.username:
+            return JSONResponse({"validation": False, "message": "Username is required"})
+
+        if not request.updates or not isinstance(request.updates, dict):
+            return JSONResponse({"validation": False, "message": "No fields provided to update"})
+
+        # Optional: prevent updating username unless explicitly allowed
+        if "username" in request.updates:
+            return JSONResponse({"validation": False, "message": "Username cannot be changed"})
+
+        # Prepare SET clause
+        columns = list(request.updates.keys())
         values = list(request.updates.values())
-        values.append(request.username)  # Add username for WHERE clause
+        set_clause = ", ".join(f"{col} = ${i+1}" for i, col in enumerate(columns))
 
+        # Add username as last parameter for WHERE clause
         query = f"""
-            UPDATE users
-            SET {set_clause}
-            WHERE username = ${len(values)}
-            RETURNING *;
+        UPDATE {full_table_name}
+        SET {set_clause}
+        WHERE username = ${len(columns) + 1}
+        RETURNING *;
         """
-        user = await db.fetchrow(query, *values)
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
+            result = await db.fetchrow(query, *values, request.username)
 
-        return {"message": "User record updated successfully"}
+        if not result:
+            return JSONResponse({"validation": False, "message": "User not found or update failed"})
+
+        updated_user = dict(result)
+        updated_user.pop("password", None)
+
+        return JSONResponse({
+            "validation": True,
+            "message": "User updated successfully",
+            "user": updated_user
+        })
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
+        print(f"Edit User Error: {e}")
+        return JSONResponse({"validation": False, "message": f"Error occurred: {str(e)}"})
 
 
 # Define request model for validation

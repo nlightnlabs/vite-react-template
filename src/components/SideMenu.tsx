@@ -19,12 +19,8 @@ const SideMenu = () => {
     const menuItemsArray = config.sideMenuItems
     setMenuItems(menuItemsArray)
 
-    console.log("sideMenuItems",menuItemsArray)
-
     const sectionSet = [...new Set(menuItemsArray.map((item:any)=>item.section))]
     setSections(sectionSet)
-
-    console.log("sectionSet",sectionSet)
   }
 
   useEffect(()=>{

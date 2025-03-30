@@ -28,7 +28,6 @@ const Labs = () => {
 
   useEffect(()=>{
     const initialView = currentVeiw !=null ? currentVeiw : views[2]
-    console.log(initialView)
     handleSelectView(initialView)
   },[])
 

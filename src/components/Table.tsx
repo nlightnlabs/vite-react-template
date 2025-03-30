@@ -10,7 +10,7 @@ const Table = (props:any) => {
 
   const gridRef = useRef<any>(null);
   const includeRowSelect = props.includeRowSelect || false
-  const selectedRows = props.selectedRows; // The updated list of selected staffing records
+  const selectedRows = props.selectedRows || null; 
   const onCellClicked = props.onCellClicked || null;
   const onCellEdit = props.onCellEdit || null
   const onRowSelected = props.onRowSelected || null; // New prop for row selection callback
@@ -22,9 +22,9 @@ const Table = (props:any) => {
   const hiddenColumns = props.hiddenColumns || []
   const columnDefs = [];
 
-  useEffect(()=>{
-    setRowData(props.data)
-  },[props.data])
+  useEffect(() => {
+    setRowData(props.data);
+  }, [props.data]);
 
 
   if (includeRowSelect){
@@ -32,12 +32,11 @@ const Table = (props:any) => {
       field: "select",
       headerName: "Include",
       cellStyle: { textAlign: 'center' },
-      width: 50,
-      filter: true,
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
+      width: 100,
+      editable: true,
+      cellRenderer: 'agCheckboxCellRenderer',
       resizable: false,
-      suppressSizeToFit: true
+      suppressSizeToFit: true,
     };
     columnDefs.push(selectField)
   }
@@ -59,7 +58,7 @@ const Table = (props:any) => {
           cellEditor: fieldOptions  ? 'agSelectCellEditor' : 'agTextCellEditor',
           cellEditorParams: fieldOptions  ? { values: fieldOptions.options } : null,
           minWidth: 25,
-          maxWidth: 150,
+          maxWidth: 300,
           flex: 0,
           headerClass: "ag-header-cell",
           cellStyle: { 
@@ -73,6 +72,28 @@ const Table = (props:any) => {
     });
   }
 
+
+  const gridOptions:any = {
+    rowClassRules: {
+      'selected-row': (params: any) => params.node.isSelected(),
+    },
+    rowSelection: {
+      mode: 'multiRow',        
+      rowCheckboxSelection: true,  
+      headerCheckboxSelection: true 
+    },
+    onFirstDataRendered: (params: any) => {
+      selectedRows && rowData.forEach((row, rowIndex) => {
+        const isSelected = selectedRows.some((selectedRow: any) => selectedRow["id"] === row["id"]);
+        if (isSelected) {
+          params.api.getDisplayedRowAtIndex(rowIndex)?.setSelected(true);
+        }
+      });
+      gridRef.current?.columnApi?.autoSizeAllColumns();
+    },
+  };
+  
+  
 
 
   const handleSelectionChange = (event:any) => {
@@ -91,9 +112,9 @@ const Table = (props:any) => {
   };
   
 
-  const handleCellEdit = (params:any) => {
+  const handleCellEdit = (e:any) => {
     if(typeof onCellEdit === "function"){
-      onCellEdit(params)
+      onCellEdit(e.data)
     }
   };
 
@@ -109,6 +130,7 @@ const Table = (props:any) => {
             onCellClicked={handleCellClick}
             onSelectionChanged={handleSelectionChange}
             onCellValueChanged={handleCellEdit}
+            gridOptions = {gridOptions}
         />
     </div>
   )

@@ -45,10 +45,15 @@ export const getData = async (query:string)=>{
 
 
 //Get Table
-export const getTable = async (tableName:string)=>{
-    
+export const getTable = async (tableName:string, schema:string="public")=>{
+    const payload = {
+      tableName,
+      schema,
+      dbName
+    }
+
     try{
-      const response = await serverConnection.post(`/db/query`,{tableName, dbName})
+      const response = await serverConnection.post(`/db/query`,payload)
       // console.log(response)
       return (response.data)
     }catch(error){
@@ -86,16 +91,15 @@ export const addRecord = async (tableName:string, columnValues:object)=>{
 }
 
 //Update Record
-export const updateRecord = async (payload:any)=>{
+export const updateRecord = async (tableName:string, record:any, whereClause:string)=>{
 
-  // Example payload
-  // {
-  //     "tableName": "employees", 
-  //     "columns": ["position"], 
-  //     "values": ["Senior Developer"], 
-  //     "whereClause": "name = 'Alice'", 
-  //     "dbName": "oomnielabs"
-  // }
+  const payload = {
+      tableName: tableName, 
+      columns: Object.keys(record), 
+      getRandomValues: Object.values(record), 
+      whereClause: whereClause, 
+      dbName: dbName
+  }
 
   console.log(payload)
 
@@ -136,16 +140,14 @@ export const deleteRecord = async (tableName:string, whereClause:string)=>{
 
 
 //Get list of all tables in database:
-export const getAllTables = async()=>{
+export const getAllTables = async(schema:string="public")=>{
   
-  const query= `SELECT table_name FROM information_schema.tables where table_schema = 'public';`
+  const query= `SELECT table_name FROM information_schema.tables where table_schema = '${schema}';`
 
   const payload = {
     "dbName": dbName,
     "query": query
   }
-
-  console.log(dbName)
 
   try{
     const result:any = await serverConnection.post("/db/query",payload)
@@ -156,7 +158,7 @@ export const getAllTables = async()=>{
       tables.push(item.table_name)
     })
   
-    console.log(tables)
+    // console.log(tables)
     return tables
   }catch(error){
     console.log(error)
@@ -184,12 +186,19 @@ export const getColumnData = async(tableName:string)=>{
 
 
 //Authenticate User
-export const authenticateUser = async(username:string, pwd:string)=>{
+export const authenticateUser = async(username:string, password:string)=>{
+
+  const payload = {
+    username,
+    password,
+    dbName: dbName,
+    schema: "public"
+  }
+
+
   try {
-      const response = await serverConnection.post("/db/authenticateUser", {
-          username,
-          pwd
-      });
+      const response = await serverConnection.post("/db/authenticateUser", payload)
+      console.log(response)
       return response.data;
   } catch (error) {
       console.error("Error authenticating user:", error);
@@ -210,10 +219,18 @@ export const getUserInfo = async (username:string)=>{
   }
 }
 
-//Add user Password
-export const addUser = async (params:Object)=>{
+//Add user
+export const addUser = async (user:any)=>{
+  const payload = {
+    username: user.username,
+    password: user.password,
+    dbName: dbName,
+    schema: "public"
+  }
+
+
   try{
-    const result = await serverConnection.post("/db/addUser",{params})
+    const result = await serverConnection.post("/db/createUser",payload)
     //console.log(result)
     const data = await result.data
     return (data)

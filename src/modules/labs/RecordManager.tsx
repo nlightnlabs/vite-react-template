@@ -5,8 +5,7 @@ import Svg from '../../components/Svg.tsx'
 // import * as styleFunctions from '../../functions/styleFunctions.ts'
 import NewRecordForm from '../../components/NewRecordForm.tsx'
 import FloatingPanel from '../../components/FloatingPanel.tsx'
-
-
+import { toProperCase } from '../../functions/formatValue.ts'
 
 const RecordManager = () => {
 
@@ -26,20 +25,26 @@ const RecordManager = () => {
   const [dataModel, setDataModel] = useState([])
 
   const getTableList = async ()=>{
-    const list = await mainApi.getAllTables()
-    // setTableList(lust)
-    // setData(response[0])
-    // const list = ["purchase_orders","invoices","users"]
-    setTableList(list)
+    const list:string[] = await mainApi.getAllTables()
+
+    setTableList([
+      ...tableList,
+      ...list.map((item,index)=>(
+        {
+          id: index, 
+          name: item, 
+          label: toProperCase(item.replace(/["_"]/g," "))
+        }
+      ))])
+
     getData(list[0])
   }
 
   const getData = async (tableName:string)=>{
-    const response = await mainApi.getTable(`public.${tableName}`)
+    const response = await mainApi.getTable(tableName)
     setData(response)
 
-    console.log(`data_models.${tableName}_data_model`)
-    const response2 = await mainApi.getTable(`data_models.${tableName}_data_model`)
+    const response2 = await mainApi.getTable(`${tableName}_data_model`, "data_models")
     setDataModel(response2)
     
   }
@@ -60,10 +65,16 @@ const RecordManager = () => {
     setCurrentCell(selectedCell)
   }
 
-  const handleCellEdit = (selectedCell:any)=>{
+  const handleCellEdit = async (selectedCell:any)=>{
     console.log("selectedCell", selectedCell)
-    const [id, value] = selectedCell
-    setCurrentCell({...currentCell,...{[id]:value}})
+    const {id, value} = selectedCell
+    const updatedRecord = {...currentCell,...{[id]:value}}
+    setCurrentCell(updatedRecord)
+    const response = await mainApi.updateRecord(tableName, updatedRecord, `"id"='${updatedRecord.id}'"`)
+    console.log(response)
+    if(response === updatedRecord){
+      console.log("Record Successfully Updated")
+    }
   }
 
   const handleRowSelect = (selectedRow:any)=>{
@@ -152,13 +163,14 @@ const RecordManager = () => {
 
         {/* List of Tables */}
         <div className="side-menu w-[200px] h-[100%]">
-        {tableList.length> 0 && tableList.map((item:any, index:number)=>(
+        {tableList.length> 0 && 
+          tableList.map((item:any)=>(
               <div 
-                key={index} 
+                key={item.id} 
                 className={selectedItem && selectedItem.id ===item.id ? "top-menu-item-selected": "top-menu-item"}
-                onClick={()=>setTableName(item)}
+                onClick={()=>setTableName(item.name)}
                 >
-                {item}
+                {item.label}
               </div>
           ))}
         </div> 
