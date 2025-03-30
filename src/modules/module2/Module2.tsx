@@ -1,11 +1,13 @@
-import { Routes, Route, useNavigate, Outlet } from "react-router-dom";
+import {useEffect} from 'react'
+import { Routes, Route, useNavigate } from "react-router-dom";
 import TopMenu from "../../components/TopMenu.tsx";
 import View1 from "./View1.tsx";
 import View2 from "./View2.tsx";
 import View3 from "./View3.tsx";
 import View4 from "./View4.tsx";
 import View5 from "./View5.tsx";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setCurrentView } from "../../redux/slices/mainSlice.ts";
 
 const Module2 = () => {
   const navigateTo = useNavigate();
@@ -20,9 +22,17 @@ const Module2 = () => {
     { id: 5, name: "view_5", label: "View 5", link: "view_5", icon: "", component: <View5 /> }
   ];
 
+
+  const dispatch = useDispatch()
   const handleSelectView = (selectedView: any) => {
+    delete selectedView.component
+    dispatch(setCurrentView(selectedView))
     navigateTo(`/${currentModule.link}/${selectedView.link}`); // ✅ Use absolute path
   };
+
+  useEffect(()=>{
+    handleSelectView(views[0])
+  },[])
 
   return (
     <div className="page flex-col fade-in">

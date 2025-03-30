@@ -13,6 +13,7 @@ interface PropTypes {
   currentPage: string,
   currentModule: any,
   currentView: any,
+  currentPath: string,
   appData: object,
   history: object[]
 }
@@ -26,8 +27,9 @@ const initialState:PropTypes = {
   logo: config.logo,
   pages: [],
   currentPage: "home",
-  currentModule: config.modules[0],
-  currentView: config.modules[0].views[0],
+  currentModule: config.currentModule,
+  currentView: config.currentView,
+  currentPath: config.currentPath,
   appData: {},
   history: []
 };
@@ -66,6 +68,9 @@ const mainSlice = createSlice({
     setCurrentView: (state, action) => {
       state.currentView = action.payload;
     },
+    setCurrentPath: (state, action) => {
+      state.currentPath = action.payload;
+    },
     setAppData: (state, action) => {
       state.appData = action.payload;
     },
@@ -90,6 +95,7 @@ export const {
   setCurrentPage,
   setCurrentModule,
   setCurrentView,
+  setCurrentPath,
   setAppData,
   setHistory,
   resetState,

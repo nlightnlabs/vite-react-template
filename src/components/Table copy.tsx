@@ -1,28 +1,36 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { toProperCase } from '../functions/formatValue';
+import { useSelector } from 'react-redux';
 
-const Table = (props) => {
-  const gridRef = useRef(null);
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'; 
+
+// Register all Community features
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const Table = (props:any) => {
+
+  const theme = useSelector((state:any)=>state.main.theme)
+
+  const gridRef = useRef<any>(null);
   const [rowData, setRowData] = useState([...props.data]);
   const includeRowSelect = props.includeRowSelect || false
-  const selectedRows = props.selectedRows; 
+  const selectedRows = props.selectedRows; // The updated list of selected staffing records
   const formatHeader = props.formatHeader || false;
   const onCellClicked = props.onCellClicked || null;
   const onCellEdit = props.onCellEdit || null
-  const onRowSelected = props.onRowSelected || null; 
-  const mode = props.mode
+  const onRowSelected = props.onRowSelected || null; // New prop for row selection callback
+  
   const tableFieldOptions = props.tableFieldOptions || [];
-  const distributeColumns = props.distributeColumns || true;
-  const suppressSizeToFit = props.suppressSizeToFit || false;
 
   const hiddenColumns = props.hiddenColumns || []
 
   const columnDefs = [];
 
   if (includeRowSelect){
+
     const selectField = {
       field: "select",
       headerName: "Include",
@@ -32,8 +40,7 @@ const Table = (props) => {
       checkboxSelection: true,
       headerCheckboxSelection: true,
       resizable: false,
-      suppressSizeToFit: true,
-      cellStyle: { textAlign: 'center' }
+      suppressSizeToFit: true
     };
     
     columnDefs.push(selectField)
@@ -46,24 +53,24 @@ const Table = (props) => {
       
       if (!hiddenColumns.includes(field)){
 
-        const fieldOptions = tableFieldOptions.find(item => item.name === field);
+        const fieldOptions = tableFieldOptions.find((item:any) => item.name === field);
       
         columnDefs.push({
           field: field,
-          headerName: formatHeader ? toProperCase(field.replaceAll("_"," ")) : field,
+          headerName: formatHeader ? toProperCase(field.replace(/"_"/g," ")) : field,
           editable: true,
           sortable: true,
           filter: true,
           cellEditor: fieldOptions  ? 'agSelectCellEditor' : 'agTextCellEditor',
           cellEditorParams: fieldOptions  ? { values: fieldOptions.options } : null,
           minWidth: 25,
-          flex: distributeColumns ? 1 : 0,
-          suppressSizeToFit: suppressSizeToFit,
+          maxWidth: 150,
+          flex: 0,
           headerClass: "ag-header-cell",
           cellStyle: { 
-              textAlign: 'left', 
-              color: field==="Predicted APH" && "rgb(0,150,50)",
-              backgroundColor:  field==="Predicted APH" &&  "rgba(0,225,100,0.25)",
+              textAlign: 'center', 
+              color: "black",
+              backgroundColor:  "white",
           },
           sort: fieldOptions  ?  fieldOptions.sortOrder : null
         });
@@ -72,10 +79,13 @@ const Table = (props) => {
   }
 
 
-  const handleSelectionChange = (event) => {
+  const handleSelectionChange = (event:any) => {
+    
+    console.log(event)
+    console.log(event.source)
 
     const source = event.source
-    const updatedSelection = event.api.getSelectedNodes().map(node => node.data);
+    const updatedSelection = event.api.getSelectedNodes().map((node:any) => node.data);
     if ((source ==="checkboxSelected" ||source ==="uiSelectAll") && JSON.stringify(updatedSelection) !== JSON.stringify(selectedRows)) {
       onRowSelected(updatedSelection);
     }
@@ -83,38 +93,35 @@ const Table = (props) => {
 
   const gridOptions = {
     rowClassRules: {
-      'selected-row': (params) => params.node.isSelected(),
+      'selected-row': (params:any) => params.node.isSelected(),
     },
-    onFirstDataRendered: (params) => {
+    onFirstDataRendered: (params:any) => {
       selectedRows && rowData.forEach((row, rowIndex) => {
-        const isSelected = selectedRows.some(selectedRow => selectedRow["Employee ID"] === row["Employee ID"]);
+        const isSelected = selectedRows.some((selectedRow:any) => selectedRow["Employee ID"] === row["Employee ID"]);
         if (isSelected) {
           params.api.getDisplayedRowAtIndex(rowIndex).setSelected(true);
         }
       });
-      params.columnApi.autoSizeAllColumns();
     },
   };
 
-  const handleCellClick = (e) => {
-    console.log(e)
+  const handleCellClick = (e:any) => {
     if (typeof onCellClicked === "function") {
-      console.log(e.data)
       onCellClicked(e.data);
     }
   };
 
   useEffect(() => {
     if (gridRef.current && gridRef.current.api && selectedRows) {
-      gridRef.current.api.forEachNode((node) => {
-        const isSelected = selectedRows.some(selectedRow => selectedRow["id"] === node.data["id"]);
+      gridRef.current.api.forEachNode((node:any) => {
+        const isSelected = selectedRows.some((selectedRow:any) => selectedRow["id"] === node.data["id"]);
         node.setSelected(isSelected);
       });
     }
   }, [selectedRows, rowData]);
 
 
-  const handleCellEdit = (params) => {
+  const handleCellEdit = (params:any) => {
     if(typeof onCellEdit === "function"){
       onCellEdit(params)
     }
@@ -127,7 +134,9 @@ const Table = (props) => {
   
 
   return (
-    <div className={mode === "dark" ? `ag-theme-alpine-dark` : `ag-theme-alpine`} style={{ height: "100%", width: '100%' }}>
+    <div 
+      className={theme === "dark" ? `ag-theme-alpine-dark` : `ag-theme-alpine`} 
+      style={{ height: "100%", width: '100%' }}>
       <AgGridReact
         ref={gridRef}
         rowData={rowData}
@@ -138,13 +147,12 @@ const Table = (props) => {
         onCellValueChanged={handleCellEdit}
         gridOptions={gridOptions}
         rowSelection="multiple"
-        checkboxSelection={true}
+        // checkboxSelection={true}
       />
     </div>
   );
 };
 
 export default Table;
-
 
 

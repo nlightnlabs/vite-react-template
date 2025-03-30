@@ -25,8 +25,14 @@ import orjson
 import httpx
 import asyncpg
 import asyncio
-from pydantic import BaseModel
+import aiosmtplib
+import aiofiles
 
+from pydantic import BaseModel, EmailStr, validator
+
+
+#Email
+from email.message import EmailMessage
 
 #OpenAI
 from openai import OpenAI
@@ -56,14 +62,16 @@ load_dotenv()
 PORT = os.getenv('PORT')
 ENV = os.getenv('ENV')
 
-PGHOST = os.getenv('PGHOST')
-PGUSER = os.getenv('PGUSER')
-PGPASSWORD = os.getenv('PGPASSWORD')
-PGDATABASE = os.getenv('PGDATABASE')
-PGPORT = os.getenv('PGPORT')
+PGHOST = os.getenv('NLIGHTN_PGHOST')
+PGUSER = os.getenv('NLIGHTN_PGUSER')
+PGPASSWORD = os.getenv('NLIGHTN_PGPASSWORD')
+PGDATABASE = os.getenv('NLIGHTN_PGDATABASE')
+PGPORT = os.getenv('NLIGHTN_PGPORT')
+OPEN_AI_API_KEY = os.getenv('NLIGHTN_OPEN_AI_API_KEY')
 
-PROJECT_ID = os.getenv('AWS_S3_SECRET_KEY')
-OPEN_AI_API_KEY = os.getenv('OPEN_AI_API_KEY')
+GMAIL_USER = os.getenv('NLIGHTN_GMAIL_USER')
+GMAIL_PASSWORD=os.getenv('NLIGHTN_GMAIL_PASSWORD')
+GOOGLE_MAPS_API_KEY = os.getenv('NLIGHTN_GOOGLE_MAPS_API_KEY')
 
 #huggingface
 HUGGING_FACE_TOKEN = os.getenv('HUGGING_FACE_TOKEN')
@@ -74,6 +82,11 @@ LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 #Bitbucket app password:
 BITBUCKET_USERNAME = os.getenv('BITBUCKET_USERNAME')
 BITBUCKET_TOKEN = os.getenv('BITBUCKET_TOKEN')
+
+#Email
+GMAIL_USER=os.getenv('NLIGHTN_GMAIL_USER')
+GMAIL_PASSWORD=os.getenv('NLIGHTN_GMAIL_PASSWORD')
+GOOGLE_MAPS_API_KEY=os.getenv('NLIGHTN_GOOGLE_MAPS_API_KEY')
 
 templates = Jinja2Templates(directory="templates")  # Set template directory
 
@@ -125,20 +138,22 @@ async def render_page(request: Request, page: str = "index"):
 db_pools = {}
 
 # Create a reusable connection pool for each database
-async def get_db_pool(db_name: str):
-    if db_name not in db_pools:
-        db_pools[db_name] = await asyncpg.create_pool(
+async def get_db_pool(dbName: str):
+    print(dbName)
+    if dbName not in db_pools:
+        db_pools[dbName] = await asyncpg.create_pool(
             user=PGUSER,
             password=PGPASSWORD,
-            database=db_name,
+            database=dbName,
             host=PGHOST,
             port=PGPORT
         )
-    return db_pools[db_name]
+    return db_pools[dbName]
 
 # Dependency function to get a connection from the pool
-async def get_db_connection(db_name: str = PGDATABASE):
-    pool = await get_db_pool(db_name)  # Use requested database name
+async def get_db_connection(dbName: str = PGDATABASE):
+    print("dbName", dbName)
+    pool = await get_db_pool(dbName)  # Use requested database name
     async with pool.acquire() as connection:
         yield connection  # Ensures proper cleanup after request
 
@@ -146,20 +161,23 @@ async def get_db_connection(db_name: str = PGDATABASE):
 # Fetch List of All Tables in the Database
 async def get_list_of_tables(db: asyncpg.Connection):
     query = """
-    SELECT tablename FROM pg_tables WHERE schemaname = 'public';
+    SELECT schemaname || '.' || tablename AS full_table_name
+    FROM pg_tables
+    WHERE schemaname NOT IN ('pg_catalog', 'information_schema');
     """
     result = await db.fetch(query)
-    return [row["tablename"] for row in result]  # Extract table names
+    print([row["full_table_name"] for row in result])
+    return [row["full_table_name"] for row in result]
 
 
 # Request Model for Database Query
 class QueryRequest(BaseModel):
-    tableName: str
+    tableName: Optional[str] = None
     columns: Optional[List[str]] = None
     values: Optional[List[Any]] = None
     whereClause: Optional[str] = None
     query: Optional[str] = None
-    dbName: str = PGDATABASE
+    dbName: Optional[str] = PGDATABASE
 
 
 def serialize_value(value):
@@ -174,46 +192,43 @@ def serialize_value(value):
 
 
 @app.post("/db/query")
-async def db_query(request: QueryRequest, db=Depends(get_db_connection)):
+async def db_query(request: QueryRequest):
+    print("db/query")
+    print(request)
 
-    """
-    Example body in api request:
-        {
-            "dbName": "oomnielabs"
-            "query": "SELECT * FROM users", 
-            "tableName": "users",
-            "columns": ["username","password"],
-            "values": {["aghosh", "pwd123"]},
-            "whereClause": "username='aghosh'",
-            "dbName": "nlightnlabs01",
-        }
-    """
-     
     try:
-        
-        allowableTables = await get_list_of_tables(db)  # Fetch list of valid tables
+        # Dynamically get dbName from the request body
+        dbName = request.dbName or PGDATABASE
+        print("Using dbName:", dbName)
 
-        # Validate the table name if querying a table directly
-        if request.tableName:
-            if request.tableName not in allowableTables:
-                raise HTTPException(status_code=400, detail=f"Table '{request.tableName}' does not exist.")
+        # Get connection pool and acquire a connection
+        pool = await get_db_pool(dbName)
+        async with pool.acquire() as db:
 
-            selected_columns = ", ".join(request.columns) if request.columns else "*"
-            query = f"SELECT {selected_columns} FROM {request.tableName} LIMIT 100;"
-        else:
-            query = request.query  # Use raw query if provided
+            allowableTables = await get_list_of_tables(db)
 
-        # Execute query asynchronously
-        response = await db.fetch(query)
+            if request.tableName:
+                if request.tableName not in allowableTables:
+                    raise HTTPException(status_code=400, detail=f"Table '{request.tableName}' does not exist.")
 
-        # ✅ Convert asyncpg.Record to list of dictionaries with serialized values
-        serialized_response = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
+                selected_columns = ", ".join(request.columns) if request.columns else "*"
+                query = f"SELECT {selected_columns} FROM {request.tableName} LIMIT 100;"
+            else:
+                query = request.query
 
-        return ORJSONResponse(content=serialized_response)  
+            response = await db.fetch(query)
+
+            serialized_response = [
+                {key: serialize_value(value) for key, value in dict(row).items()} 
+                for row in response
+            ]
+
+            return ORJSONResponse(content=serialized_response)
 
     except Exception as e:
         print(f"Database Error: {e}")
         raise HTTPException(status_code=500, detail="Database error occurred")
+
 
 
 #Add records in a database table
@@ -265,10 +280,13 @@ async def insert_record(request: QueryRequest, db: asyncpg.Connection = Depends(
 
 
 #Update records in a database table
-@app.put("/db/update")
+@app.post("/db/update")
 async def update_record(request: QueryRequest, db: asyncpg.Connection = Depends(get_db_connection)):
+
+    print(request)
+
     """
-    Example body in api request:
+    Example body in API request:
         {
             "tableName": "employees", 
             "columns": ["position"], 
@@ -297,13 +315,15 @@ async def update_record(request: QueryRequest, db: asyncpg.Connection = Depends(
         set_clause = ", ".join(f"{col} = ${i+1}" for i, col in enumerate(request.columns))
         query = f"UPDATE {request.tableName} SET {set_clause} WHERE {request.whereClause} RETURNING *;"
 
-        # Execute query
+        # Execute query and fetch updated values
         response = await db.fetch(query, *request.values)
 
-        # ✅ Convert asyncpg.Record to list of dictionaries with serialized values
-        serialized_response = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
+        if not response:
+            raise HTTPException(status_code=404, detail="No matching record found to update.")
+        
+        updated_record = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
 
-        return JSONResponse(content=[dict(row) for row in serialized_response])
+        return JSONResponse(content=updated_record[0])
 
     except Exception as e:
         print(f"Database Error: {e}")
@@ -340,7 +360,7 @@ async def delete_record(request: QueryRequest, db: asyncpg.Connection = Depends(
         # Execute query
         response = await db.fetch(query)
 
-        # ✅ Convert asyncpg.Record to list of dictionaries with serialized values
+        # Convert asyncpg.Record to list of dictionaries with serialized values
         serialized_response = [{key: serialize_value(value) for key, value in dict(row).items()} for row in response]
 
         return JSONResponse(content=[dict(row) for row in serialized_response])
@@ -350,56 +370,43 @@ async def delete_record(request: QueryRequest, db: asyncpg.Connection = Depends(
         raise HTTPException(status_code=500, detail=f"Database error occurred: {str(e)}")
 
 
-#Authenticate user
+# Pydantic Model for Request Validation
+class AuthRequest(BaseModel):
+    username: str
+    pwd: str
+
+
+# FastAPI Route to Authenticate User
 @app.post("/db/authenticateUser")
-async def authenticate_user(request: Request, db=Depends(get_db_connection)):
-    # Local definitions inside the endpoint
-    class AuthRequest(BaseModel):
-        username: str
-        pwd: str
-        dbName: str = PGDATABASE
-
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
-
-    # Manually parse and validate the request JSON using the local Pydantic model
+async def authenticate_user(request: AuthRequest, db=Depends(get_db_connection)):
     try:
-        body = await request.json()
-        user_data = AuthRequest(**body)
-    except Exception as e:
-        return JSONResponse({"validation": False, "message": str(e)})
-
-    print(user_data.username)
-    print(user_data.pwd)
-    print(user_data.dbName)
-
-    try:
-        # Fetch user from database
-        user_record = await db.fetchrow("SELECT * FROM users WHERE username = $1", user_data.username)
+        # Fetch stored hashed password from the database
+        query = "SELECT * FROM users WHERE username = $1;"
+        user_record = await db.fetchrow(query, request.username)
 
         if not user_record:
-            return JSONResponse({"validation": False, "message": "Username not found"})
+            return {"validation": False, "message": "Invalid username or password"}
 
-        # Extract hashed password from the record
         stored_hashed_password = user_record["pwd"]
 
-        # Verify password
-        if not verify_password(user_data.pwd, stored_hashed_password):
-            return JSONResponse({"validation": False, "message": "Invalid password"})
+        # Verify the password using bcrypt
+        if bcrypt.checkpw(request.pwd.encode("utf-8"), stored_hashed_password.encode("utf-8")):
+            user = dict(user_record)  # Convert asyncpg Record to a dictionary
 
-        # Convert asyncpg.Record to dictionary before returning
-        user_dict = dict(user_record)
-        if "pwd" in user_dict:
-            del user_dict["pwd"]  # Remove password before returning
+            user.pop("pwd", None)  # Removes "pwd" if it exists, avoids KeyError
 
-        serialized_user_info = {key: serialize_value(value) for key, value in user_dict.items()}
-        response = {"validation": True, "user_info": serialized_user_info}
-        return JSONResponse(response)
+            # Ensure values are serializable (e.g., convert datetime, UUIDs)
+            sanitized_user_info = {key: str(value) if isinstance(value, (bytes, memoryview)) else value for key, value in user.items()}
+            
+            return {"validation": True, "user": sanitized_user_info}
 
-    finally:
-        await db.close()
+        else:
+            return {"validation": False, "message": "Invalid username or password"}
 
-
+    except Exception as e:
+        print(f"Database Error: {e}")
+        raise HTTPException(status_code=500, detail="Database error occurred")
+    
 
 #Create a new user
 @app.post("/db/createUser")
@@ -446,6 +453,71 @@ async def create_user(request: Request, db=Depends(get_db_connection)):
     except Exception as e:
         return JSONResponse({"validation": "false", "message": f"Error occurred: {str(e)}"})
     
+
+# Define a Pydantic model for password reset
+class ResetPasswordRequest(BaseModel):
+    username: str
+    new_password: str
+
+# Define a Pydantic model for editing a user record
+class EditUserRequest(BaseModel):
+    username: str
+    updates: dict  # Example: {"email": "newemail@example.com", "role": "admin"}
+
+
+# Endpoint to reset password
+@app.post("/db/resetPassword")
+async def reset_password(request: ResetPasswordRequest, db=Depends(get_db_connection)):
+    try:
+        # Hash the new password before storing
+        hashed_password = bcrypt.hashpw(request.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+        query = """
+            UPDATE users
+            SET pwd = $1
+            WHERE username = $2
+            RETURNING *;
+        """
+
+        user = await db.fetchrow(query, hashed_password, request.username)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {"message": "Password updated successfully"}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating password: {str(e)}")
+
+
+# Endpoint to edit user record
+@app.post("/db/editUser")
+async def edit_user(request: EditUserRequest, db=Depends(get_db_connection)):
+    try:
+        # Ensure there are updates
+        if not request.updates:
+            raise HTTPException(status_code=400, detail="No updates provided")
+
+        # Construct SET clause dynamically
+        set_clause = ", ".join(f"{key} = ${i+1}" for i, key in enumerate(request.updates.keys()))
+        values = list(request.updates.values())
+        values.append(request.username)  # Add username for WHERE clause
+
+        query = f"""
+            UPDATE users
+            SET {set_clause}
+            WHERE username = ${len(values)}
+            RETURNING *;
+        """
+        user = await db.fetchrow(query, *values)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {"message": "User record updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
+
 
 # Define request model for validation
 class RunAppRequest(BaseModel):
@@ -799,6 +871,129 @@ async def get_data(object="assets"):
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
     return response.json()
+
+
+class Attachment(BaseModel):
+    name: str
+    type: str
+    size: int
+    lastModified: int
+    content: str
+
+class EmailPayload(BaseModel):
+    to_email: List[EmailStr]
+    cc: Optional[List[EmailStr]] = []
+    bcc: Optional[List[EmailStr]] = []
+    from_email: Optional[EmailStr] = None
+    subject: Optional[str] = ""
+    message: Optional[str] = ""
+    attachments: Optional[List[Attachment]] = []
+
+    @validator("from_email", pre=True, always=True)
+    def empty_string_to_none(cls, v: Any) -> Any:
+        return v or None
+
+
+import base64
+@app.post("/sendEmail")
+async def send_email(payload: EmailPayload) -> dict:
+    msg = EmailMessage()
+    msg["From"] = payload.from_email or GMAIL_USER
+    msg["To"] = ", ".join(payload.to_email)
+    msg["Cc"] = ", ".join(payload.cc)
+    msg["Bcc"] = ", ".join(payload.bcc)
+    msg["Subject"] = payload.subject
+    msg.set_content(payload.message)
+
+    print(msg)
+
+    # Add attachments
+    for attachment in payload.attachments or []:
+        try:
+            content = attachment.content
+            name = attachment.name
+            mime_type = attachment.type or "application/octet-stream"
+
+            # Handle base64 with optional data URI prefix
+            if content.startswith("data:"):
+                _, base64_data = content.split(",", 1)
+            else:
+                base64_data = content
+
+            file_data = base64.b64decode(base64_data)
+            maintype, subtype = mime_type.split("/") if "/" in mime_type else ("application", "octet-stream")
+
+            msg.add_attachment(
+                file_data,
+                maintype=maintype,
+                subtype=subtype,
+                filename=name
+            )
+        except Exception as e:
+            return {"error": f"Failed to attach {name}: {str(e)}"}
+
+    try:
+        await aiosmtplib.send(
+            msg,
+            hostname="smtp.gmail.com",
+            port=587,
+            start_tls=True,
+            username=GMAIL_USER,
+            password=GMAIL_PASSWORD
+        )
+        return {"status": "Email sent successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
+@app.post("/send_email_from_oomnitza")
+async def send_email_from_oomnitza(payload: EmailPayload) -> dict:
+    msg = EmailMessage()
+    msg["From"] = payload.from_email or GMAIL_USER
+    msg["To"] = ", ".join(payload.to_email)
+    msg["Cc"] = ", ".join(payload.cc)
+    msg["Bcc"] = ", ".join(payload.bcc)
+    msg["Subject"] = payload.subject
+    msg.set_content(payload.message)
+
+    # Add attachments
+    for attachment in payload.attachments or []:
+        try:
+            content = attachment.content
+            name = attachment.name
+            mime_type = attachment.type or "application/octet-stream"
+
+            # Handle base64 with optional data URI prefix
+            if content.startswith("data:"):
+                _, base64_data = content.split(",", 1)
+            else:
+                base64_data = content
+
+            file_data = base64.b64decode(base64_data)
+            maintype, subtype = mime_type.split("/") if "/" in mime_type else ("application", "octet-stream")
+
+            msg.add_attachment(
+                file_data,
+                maintype=maintype,
+                subtype=subtype,
+                filename=name
+            )
+        except Exception as e:
+            return {"error": f"Failed to attach {name}: {str(e)}"}
+
+    try:
+        await aiosmtplib.send(
+            msg,
+            hostname="smtp.mailgun.org",
+            port=587,
+            start_tls=True,
+            username="postmaster@sandboxedef907d62824131b7c5527c0b828750.mailgun.org",
+            password="0d7997e25c2566f42f2684fafbe5a5e5"
+        )
+        return {"status": "Email sent successfully"}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":

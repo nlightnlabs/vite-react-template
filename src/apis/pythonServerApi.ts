@@ -1,4 +1,5 @@
 import axios from "axios";
+import {config} from '../config.ts'
 
 import * as formatValue from '../functions/formatValue.ts'
 
@@ -9,19 +10,15 @@ export const serverConnection = axios.create({
   baseURL,
 })
 
-const dbName = "main"
+const dbName = config.dbName
 export const s3Bucket = "nlightnlabs01"
 export const images = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/icons/images"
 export const icons = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/icons/icons"
 export const s3url = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/mysalesteam"
-export const s3RootFolder = "pitchPrep"
+export const s3RootFolder = "dealprep"
 
 // Run python app
 export const pythonApp = async (app_name:string, main_function:string, parameters:Object) =>{
-
-  console.log(app_name)
-  console.log(main_function)
-  console.log(parameters)
 
     try {
       const response = await serverConnection.post('/runApp', { app_name, main_function, parameters });
@@ -35,9 +32,10 @@ export const pythonApp = async (app_name:string, main_function:string, parameter
 
 //General Query
 export const getData = async (query:string)=>{
+
   try{
-    const result = await serverConnection.post("/db/query",{query, dbName})
-    //console.log(result)
+    const result = await serverConnection.post("/db/query",{query,dbName})
+    console.log(result)
     const data = await result.data
     return (data)
   }catch(error){
@@ -71,7 +69,7 @@ export const getList = async (tableName:string, fieldName:string)=>{
 }
 
 //Create New Record
-export const addRecord = async (tableName:string, columnValues:Object)=>{
+export const addRecord = async (tableName:string, columnValues:object)=>{
   
   if(tableName.length > 0 && Object.entries(columnValues).length>0){
     try{
@@ -88,21 +86,47 @@ export const addRecord = async (tableName:string, columnValues:Object)=>{
 }
 
 //Update Record
-export const updateRecord = async (tableName:string, columnValues:Object, conditions:Object)=>{
+export const updateRecord = async (payload:any)=>{
+
+  // Example payload
+  // {
+  //     "tableName": "employees", 
+  //     "columns": ["position"], 
+  //     "values": ["Senior Developer"], 
+  //     "whereClause": "name = 'Alice'", 
+  //     "dbName": "oomnielabs"
+  // }
+
+  console.log(payload)
+
     try{
-      const result = await serverConnection.post("/db/update",{tableName, columnValues, conditions})
-      return result.data
+      const response = await serverConnection.post("/db/update",payload)
+      console.log(response.data)
+      return response.data
     }catch(error){
       console.log(error)
     }
 }
 
 //Delete Record
-export const deleteRecord = async (tableName:string,condition:Object)=>{
+export const deleteRecord = async (tableName:string, whereClause:string)=>{
+  `payload
+  {
+    "tableName": "employees", 
+    "whereClause": "name = 'Alice'", 
+    "dbName": "oomnielabs"
+  }
+  `
+
+  const payload={
+    tableName: tableName, 
+    whereClause: whereClause,
+    dbName: dbName
+  }
 
   try{
-    const result = await serverConnection.post("/db/delete",{tableName,condition})
-    //console.log(result)
+    const result = await serverConnection.post("/db/delete",payload)
+    // console.log(result)
     const data = await result.data
     return (data)
   }catch(error){
@@ -113,10 +137,27 @@ export const deleteRecord = async (tableName:string,condition:Object)=>{
 
 //Get list of all tables in database:
 export const getAllTables = async()=>{
+  
   const query= `SELECT table_name FROM information_schema.tables where table_schema = 'public';`
+
+  const payload = {
+    "dbName": dbName,
+    "query": query
+  }
+
+  console.log(dbName)
+
   try{
-    const result = await serverConnection.post("/db/query",{query})
-    return result.data
+    const result:any = await serverConnection.post("/db/query",payload)
+
+    const tables:any = []
+    const data = result.data
+    data.map((item:any)=>{
+      tables.push(item.table_name)
+    })
+  
+    console.log(tables)
+    return tables
   }catch(error){
     console.log(error)
   }
@@ -143,18 +184,16 @@ export const getColumnData = async(tableName:string)=>{
 
 
 //Authenticate User
-export const authenticateUser = async (params:Object)=>{
-
-  // console.log(params)
-
-  const body = {...params,...{"dbName":dbName}}
-
-  try{
-    const submitLoggin = await serverConnection.post("/db/authenticateUser",body)
-    const userValidated = submitLoggin.data
-    return userValidated
-  }catch(error){
-      console.log(error)
+export const authenticateUser = async(username:string, pwd:string)=>{
+  try {
+      const response = await serverConnection.post("/db/authenticateUser", {
+          username,
+          pwd
+      });
+      return response.data;
+  } catch (error) {
+      console.error("Error authenticating user:", error);
+      throw error;
   }
 }
 
@@ -171,9 +210,8 @@ export const getUserInfo = async (username:string)=>{
   }
 }
 
-//Reset User Password
+//Add user Password
 export const addUser = async (params:Object)=>{
-
   try{
     const result = await serverConnection.post("/db/addUser",{params})
     //console.log(result)
@@ -185,41 +223,59 @@ export const addUser = async (params:Object)=>{
 }
 
 
-//Reset User Password
-export const resetPassword = async (req:any)=>{
-
-  const params = {
-    tableName: req.tableName,
-    idField: req.idField,
-    recordId: req.recordId,
-    formData: req.formData
+// Reset Password Function
+export async function resetPassword(username:string, newPassword:string) {
+  try {
+      const response = await serverConnection.post("/db/resetPassword", {
+          username,
+          new_password: newPassword
+      });
+      return response.data;
+  } catch (error) {
+      console.error("Error resetting password:", error);
+      throw error;
   }
+}
 
-  try{
-    const result = await serverConnection.post("/db/updateRecord",{params})
-    //console.log(result)
-    const data = await result.data
-    return (data)
-  }catch(error){
-    //console.log(error)
+// Edit User Function
+export async function editUser(payload:any) {
+  try {
+      const response = await serverConnection.post("/db/editUser", {payload})
+      console.log(response.data)
+      return response.data;
+  } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
   }
 }
 
 
 //Send Email
-export const sendEmail = async (to:string, subject:string, message:string, htmlPage:string)=>{
-    
+export const sendEmail = async (payload:any)=>{
+    `payload = {
+     to: [],
+      cc: [],
+      bcc: [],
+      from: "",
+      title: "",
+      subject: "",
+      message: "",
+      attachments: []
+    }
+    `
+
+  console.log(payload)
   try{
-    const result = await serverConnection.post("/sendEmail",{to, subject, message, htmlPage})
-    // console.log(result)
+    const result = await serverConnection.post("/sendEmail",payload)
+    console.log(result)
     const data = await result.data
     return (data)
   }catch(error){
-    // console.log(error)
+    console.log(error)
   }
 }
 
-//Ask GPT
+
 //Ask GPT
 export const askGPT = async (userInput:string, data:any, llm:string)=>{
 
@@ -296,6 +352,48 @@ formData.append('file', audioBlob, 'audio.wav');
 };
 
 
+//Get urls for files to AWS S3
+export const getS3Urls = async (bucketName:string=s3Bucket,folder:string=s3RootFolder, attachments:any[])=>{
+  
+  let updatedAttachments:Object[] = []
+
+  if (attachments){
+  
+    try {
+      await Promise.all(attachments.map(async (file) => {
+
+        console.log(file)
+
+        const fileName = file.name
+        const getUrl = await serverConnection.post(`/aws/getS3FolderUrl`, {bucketName, folder, fileName});
+        const url = await getUrl.data;
+  
+        const fileUrl = await url.split("?")[0];
+
+        const uploadedFile = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+          url: fileUrl
+        };
+
+        console.log(uploadedFile)
+        updatedAttachments.push(uploadedFile)
+      }));
+
+      console.log(updatedAttachments)
+      return updatedAttachments
+
+    } catch (error) {
+      console.error("Error getting url for file:", error);
+    }
+  }else{
+    console.log("No attachments provided")
+  }
+}
+
+
 
 
 //Upload files to AWS S3
@@ -335,8 +433,6 @@ export const uploadFiles = async (bucketName:string=s3Bucket,folder:string=s3Roo
   }else{
     console.log("No attachments provided")
   }
-
-
 }
 
 

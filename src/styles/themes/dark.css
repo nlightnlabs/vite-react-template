@@ -12,7 +12,11 @@
     --border-color: rgb(75,75,75);
     --highlighted-color: red;
     --header-color: rgb(200,200,200);
-    --header-background-color: rgb(15,15,15);
+    --header-background-color: linear-gradient(
+      var(--direction, to right),
+      var(--color1, rgb(25,25,25)),
+      var(--color2, rgb(50,50,50))
+    );
     --header-border-color: rgb(50,50,50);
     --navbar-color: rgb(100,100,100);
     --navbar-background-color: rgb(30,30,30);
@@ -24,18 +28,22 @@
     --menu-item-highlight-color: white;
     --menu-item-highlight-background-color: rgb(150,150,150);
     --side-menu-color: rgb(200,200,200);
-    --side-menu-background-color: rgb(15,15,15);
+    --side-menu-background-color: linear-gradient(
+      var(--direction, to bottom),
+      var(--color1, rgb(50,50,50)),
+      var(--color2, rgb(25, 25, 25))
+    );
     --side-menu-item-color: rgb(200,200,200);
     --side-menu-item-highlighted-color: rgb(200,200,200);
     --side-menu-item-highlighted-background-color: rgb(100,100,100);
     --top-menu-color: rgb(200,200,200);
-    --top-menu-background-color: rgb(15,15,15);
+    --top-menu-background-color: rgb(25,25,25);
     --top-menu-item-color: rgb(200,200,200);
     --top-menu-item-highlight-color: rgb(200,200,200);
     --top-menu-item-highlight-background-color: rgb(100,100,100);
     --subtitle-color: rgb(150,150,150);
     --label-color: rgb(17, 9, 9);
-    --panel-background-color: rgb(15,15,15);
+    --panel-background-color: rgb(25,25,25);
     --panel-box-shadow: 5px 5px 10px rgba(30,30,30,0.5);
     --panel-border: 1px solid rgb(30,30,30);
     --primary-button-background-color: rgb(200,200,200);
@@ -46,6 +54,10 @@
     --secondary-button-color: white;
     --secondary-button-hover-background-color: rgb(200,200,200);
     --secondary-button-hover-color: black;
+    --link-background-color: rgba(0,0,0,0);
+    --link-color: rgb(100,100,100);
+    --link-hover-background-color: rgba(255,255,255,0);
+    --link-hover-color: rgb(200,200,200);
     --icon-color: rgb(200, 200, 200);
     --icon-hover-color: rgb(100,100,100);
     --header-menu-icon-color: rgb(100,100,100);
@@ -54,13 +66,16 @@
     --top-menu-icon-hover-color: white;
     --side-menu-icon-color: rgb(100,100,100);
     --side-menu-icon-hover-color: rgb(200,200,200);
-    --input-color: white;
+    --input-color: rgb(0,150,225);
     --input-background-color: rgb(15,15,15);
     --input-border: 1px solid rgb(30,30,30);
-    --select-color: white;
+    --textarea-color: rgb(0,150,225);
+    --textarea-background-color: rgb(15,15,15);
+    --textarea-border: 1px solid rgb(30,30,30);
+    --select-color: rgb(0,150,225);
     --select-background-color: rgb(15,15,15);
     --select-border: 1px solid rgb(30,30,30);
-    --choice-list-color: white;
+    --choice-list-color: rgb(0,150,225);
     --choice-list-background-color: rgb(100,100,100);
     --choice-list-border: 1px solid rgb(235,235,235);
     --choice-list-item-color: white;
@@ -74,8 +89,15 @@
     --list-item-background-color: rgba(0,0,0,0);
     --selected-color: rgb(100,100,100);
     --selected-background-color: rgb(200,200,200);
-    --radius: 5px;
+    --radius: 10px;
     --chat-color: white;
     --chat-background-color: rgb(30,30,30);
     --chat-border: 1px solid rgb(30,30,30);
+    --file-drop-background: repeating-linear-gradient(
+      45deg,
+      black,
+      black 5px,
+      rgb(25,25,25) 5px,
+      rgb(25,25,25) 10px
+    )
   }

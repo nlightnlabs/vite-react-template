@@ -34,10 +34,13 @@ const Header = () => {
       
       {user &&
         <div className="flex flex-col items-center w-[75px]">
-          <div className={`flex text-[var(--emphasis-color)] font-bold`}>{user.first_name}</div>
-          <div className="flex text-[var(--secondary-color)] text-[12px] cursor-pointer hover:text-yellow-400" onClick={()=>handleSignOut()}>Sign Out</div>
+          <div className={`flex font-bold`}>{user.first_name}</div>
+          <div className="flex text-[12px] cursor-pointer hover:text-yellow-400" onClick={()=>handleSignOut()}>Sign Out</div>
         </div>
       }
+
+      {!user &&<button className="button-primary m-3" onClick={()=>handleSignOut()}>Reset</button>}
+
       </div>
     </div>
   )

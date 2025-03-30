@@ -35,7 +35,7 @@ const DragAndDropUploader = () => {
 
 
   return (
-    <div className="flex flex-col w-[500px] h-[300px] p-3 justify-start overflow-hidden">
+    <div className="flex flex-col w-[500px] h-auto p-3 items-center overflow-hidden bg-gray-200">
  
         <div className="flex flex-col w-full h-[100%] justify-start">
           <input
@@ -69,7 +69,7 @@ const DragAndDropUploader = () => {
           }
         </div>
 
-    <button className="primary-button mt-3" onClick={()=>handleSubmmit()}>Submit</button>
+    <button className="primary-button mt-3" onClick={()=>handleSubmmit()}>Upload</button>
 
     </div>
   );

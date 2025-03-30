@@ -39,6 +39,10 @@
     --secondary-button-color: white;
     --secondary-button-hover-background-color-: rgb(200,200,200);
     --secondary-button-hover-color: black;
+    --link-background-color: rgba(0,0,0,0);
+    --link-color: rgb(200,200,200);
+    --link-hover-background-color: rgba(0,0,0,0);
+    --link-hover-color: rgb(0,100,225);
     --header-color: rgb(100,100,100);
     --header-bottom-border: 1px solid rgb(235,235,235);
     --icon-color: rgb(150,150,150);
@@ -69,7 +73,7 @@
     --list-item-background-color: rgba(0,0,0,0);
     --selected-color: black;
     --selected-background-color: rgb(225,225,225);
-    --radius: 5px;
+    --radius: 10px;
     --chat-color: rgb(0,100,200);
     --chat-background-color: white;
     --chat-border: 1px solid rgb(235,235,235);

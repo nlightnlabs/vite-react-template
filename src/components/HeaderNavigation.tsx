@@ -4,7 +4,7 @@ import Svg from './Svg';
 import * as styleFunctions from "../functions/styleFunctions.js";
 
 import {useDispatch} from 'react-redux'
-import {setTheme} from '../redux/slices/mainSlice.js'
+import {setTheme, setCurrentPath} from '../redux/slices/mainSlice.js'
 
 import {config} from '../config.ts'
 
@@ -33,6 +33,7 @@ const HeaderNavigation = () => {
 
     const handleSelectItem = (item:string)=>{
         setSelectedItem(item)
+        dispatch(setCurrentPath(`/${item}`));
         navigateTo(`/${item}`)
     }
 
@@ -100,12 +101,17 @@ const HeaderNavigation = () => {
                         onMouseLeave={()=>setShowThemeOptions(false)}
                     >{themes.length>0 && 
                         themes.map((item:any)=>(
-                            <div key={item.id} className={`choice-list-item`} onClick={()=>handleChangeTheme(item.name)}>{item.label}</div>
+                            <div 
+                                key={item.id} className={`choice-list-item`} 
+                                onClick={()=>handleChangeTheme(item.name)}>{item.label}
+                            </div>
                         ))
                     }
                         
                     </div>
                 }
+
+            
             </div>
             </div>
 

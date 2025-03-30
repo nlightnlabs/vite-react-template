@@ -3,20 +3,22 @@ import {useEffect, useState} from 'react'
 import { useNavigate } from 'react-router-dom';
 import {config} from "../config.ts"
 import * as styleFunctions from '../functions/styleFunctions.ts'
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCurrentModule } from '../redux/slices/mainSlice.ts';
+
+const modules = config.modules
 
 const Home = () => {
-
+  
   const theme = useSelector((state:any)=>state.main.theme)
 
   const navigateTo = useNavigate()
-
-  const modules = config.modules
-
+  const dispatch = useDispatch()
   const [refresh, setRefresh] = useState(1)
 
-  const handleCardClick = (module:string)=>{
-    navigateTo(`/${module}`)
+  const handleCardClick = (module:any)=>{
+    dispatch(setCurrentModule(module))
+    navigateTo(`/${module.name}`)
   }
 
   useEffect(()=>{
@@ -25,16 +27,20 @@ const Home = () => {
 
 
   return (
-    <div className="flex w-full h-[100%]">
+    <div 
+      className="flex w-full h-[100%] flex-wrap"
+      style={{transition: "all 0.5s ease-in-out"}}
+    >
 
       {modules && modules.map((item:any)=>(
         <div 
           key={item.id}
           className="card-vertical flex-col m-5"
-          onClick = {()=>handleCardClick(item.name)}
+          onClick = {()=>handleCardClick(item)}
           >
           <div className="flex w-full h-[100px]">
-            {refresh !=0 && <Svg
+            {refresh !=0 && 
+            <Svg
               iconName={item.icon_name}
               fillColor = {styleFunctions.getColor("icon")}
             />}

@@ -70,20 +70,37 @@ End Point | Marks the completion of the workflow after notifications are sent.`,
 
   const pageStyle = `
     .container {
-      font-family: Arial, sans-serif;
-      margin: 0 auto;
-      padding: 40px;
-      width: 900px;
+        font-family: Arial, sans-serif;
+        margin: 0 auto;
+        padding: 50px;
+        width: 900px;
+        height: auto;
+        border: 4px solid rgba(200,200,200,0.5);
+        border-radius: 20px;
+        overflow-hidden;
+        box-shadow: 10px 10px 20px rgba(200,200,200,0.5);
     }
 
-    h1, h2 {
-      color: #333;
+    .title {
+      font-size: 36px;
+      color: rgb(175,0,0);
       margin-top: 30px;
       margin-bottom: 20px;
       opacity: 0;
       transition: opacity 1s ease-in;
       font-weight: bold;
     }
+
+    .sectionTitle {
+      font-size: 24px;
+      color: black;
+      margin-top: 30px;
+      margin-bottom: 20px;
+      opacity: 0;
+      transition: opacity 1s ease-in;
+      font-weight: bold;
+    }
+
 
     .visible {
       opacity: 1;
@@ -135,69 +152,71 @@ End Point | Marks the completion of the workflow after notifications are sent.`,
   `;
 
   return (
-    <div className="flex w-full">
-      <style>{pageStyle}</style>
-      <div className="container">
-        {/* Titles fade in all at once */}
-        <h1 className={showTitles ? "visible" : ""}>
-          Oomnitza Configuration Documentation
-        </h1>
+    <div className="page overflow-y-auto">
+      <div className="flex m-auto mb-[100px]">
+        <style>{pageStyle}</style>
+        <div className="container">
+          {/* Titles fade in all at once */}
+          <h1 className={showTitles ? "title visible" : ""}>
+            Oomnitza Configuration Documentation
+          </h1>
 
-        <h2 className={showTitles ? "visible" : ""}>1. Summary</h2>
-        <p className="streaming-text">
-          {visibleText.summary.split("").map((char, index) => (
-            <span key={index}>{char}</span>
-          ))}
-        </p>
+          <h2 className={showTitles ? "sectionTitle visible" : ""}>1. Summary</h2>
+          <p className="streaming-text">
+            {visibleText.summary.split("").map((char, index) => (
+              <span key={index}>{char}</span>
+            ))}
+          </p>
 
-        {/* Tables fade in after titles */}
-        <div className={`table-container ${showTables ? "visible" : ""}`}>
-          <h2 className={showTitles ? "visible" : ""}>2. Change Log</h2>
-          <table>
-            <thead>
-              <tr className="streaming-text">
-                <th>Change Date</th>
-                <th>Changed By</th>
-                <th>Description of Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleText.changeLog.split("\n").map((line, index) => (
-                <tr key={index} className="streaming-text">
-                  {line.split(" | ").map((cell, cellIndex) => (
-                    <td key={cellIndex}>
-                      {cell.split("").map((char, charIndex) => (
-                        <span key={charIndex}>{char}</span>
-                      ))}
-                    </td>
-                  ))}
+          {/* Tables fade in after titles */}
+          <div className={`table-container ${showTables ? "visible" : ""}`}>
+            <h2 className={showTitles ? "sectionTitle visible" : ""}>2. Change Log</h2>
+            <table>
+              <thead>
+                <tr className="streaming-text">
+                  <th>Change Date</th>
+                  <th>Changed By</th>
+                  <th>Description of Change</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {visibleText.changeLog.split("\n").map((line, index) => (
+                  <tr key={index} className="streaming-text">
+                    {line.split(" | ").map((cell, cellIndex) => (
+                      <td key={cellIndex}>
+                        {cell.split("").map((char, charIndex) => (
+                          <span key={charIndex}>{char}</span>
+                        ))}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <h2 className={showTitles ? "visible" : ""}>3. Technical Details</h2>
-          <table>
-            <thead>
-              <tr className="streaming-text">
-                <th>Component</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleText.technicalDetails.split("\n").map((line, index) => (
-                <tr key={index} className="streaming-text">
-                  {line.split(" | ").map((cell, cellIndex) => (
-                    <td key={cellIndex}>
-                      {cell.split("").map((char, charIndex) => (
-                        <span key={charIndex}>{char}</span>
-                      ))}
-                    </td>
-                  ))}
+            <h2 className={showTitles ? "sectionTitle visible" : ""}>3. Technical Details</h2>
+            <table>
+              <thead>
+                <tr className="streaming-text">
+                  <th>Component</th>
+                  <th>Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {visibleText.technicalDetails.split("\n").map((line, index) => (
+                  <tr key={index} className="streaming-text">
+                    {line.split(" | ").map((cell, cellIndex) => (
+                      <td key={cellIndex}>
+                        {cell.split("").map((char, charIndex) => (
+                          <span key={charIndex}>{char}</span>
+                        ))}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react'
 
+
 const TopMenu = (props:any) => {
 
   const [menuItems, setMenuItems] = useState<any>([])
@@ -9,15 +10,16 @@ const TopMenu = (props:any) => {
     setMenuItems(props.menuItems)
   }
 
-  useEffect(()=>{
-    getMenuItems()
-  },[])
-
   const handleSelectedItem = (item:any)=>{
     setSelectedItem(item)
     props.handleSelectedItem(item)
   }
 
+  useEffect(()=>{
+    getMenuItems()
+  },[props])
+
+ 
   return (
     <div className="top-menu mt-5">
       

@@ -20,11 +20,11 @@ const SignIn = () => {
 
   const authenticateUser = async ()=>{
 
-    const response = await mainApi.authenticateUser(formData)
-    
+    const response = await mainApi.authenticateUser(formData.username, formData.pwd)
     if(response.validation){
+      console.log(response.user)
       dispatch(setUserAuthenticated(true))
-      dispatch(setCurrentUser(response.user_info))
+      dispatch(setCurrentUser(response.user))
       navigateTo("/home")
     }else{
       dispatch(setUserAuthenticated(false))
@@ -38,13 +38,18 @@ const SignIn = () => {
     setFormData({...formData,...{[name]:value}})
   }
 
+  const handleCreateAccount = ()=>{
+    navigateTo("/create_account")
+  }
+
+  const handleForgotPassword = ()=>{
+    navigateTo("/reset_password")
+  }
 
   return (
     <div className="page flex-col fade-in items-center">
 
-      <h1>{appName}</h1>
-
-      <h3 className="m-auto mt-5 mb-5">Sign In</h3>
+      <span className="flex text-[72px] m-5">{appName}</span>
  
       <div className="form w-[500px]">
       
@@ -58,9 +63,14 @@ const SignIn = () => {
           <input name="pwd" type="password" autoComplete="off" value={formData.pwd} onChange={(e)=>handleInputChange(e)}></input>
         </div>
 
-        <button className="primary-button m-auto" onClick={()=>authenticateUser()}>Submit</button>
+        <button className="primary-button m-auto" onClick={()=>authenticateUser()}>Sign In</button>
 
         {errorMessage && <div className="flex text-red-500 mt-5">{errorMessage}</div>}
+
+        <div className="flex w-full justify-center">
+          <span className="link m-3" onClick={()=>handleForgotPassword()}>Forgot Password</span>
+          <span className="link m-3" onClick={()=>handleCreateAccount()}>Create Account</span>
+        </div>
 
       </div>
     </div>

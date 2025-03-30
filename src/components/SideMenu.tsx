@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import * as styleFunctions from '../functions/styleFunctions.js'
 import {config} from '../config.ts'
 import { useDispatch } from 'react-redux';
-import { setCurrentModule } from '../redux/slices/mainSlice.ts';
+import { setCurrentModule, setCurrentPath } from '../redux/slices/mainSlice.ts';
 
 const SideMenu = () => {
 
+  const [showMenu, setShowMenu] = useState(true)
   const [menuItems, setMenuItems] = useState<any>([])
   const [sections, setSections] = useState<any>([])
   const [selectedItem, setSelectedItem] = useState<any>(null)
@@ -18,8 +19,12 @@ const SideMenu = () => {
     const menuItemsArray = config.sideMenuItems
     setMenuItems(menuItemsArray)
 
+    console.log("sideMenuItems",menuItemsArray)
+
     const sectionSet = [...new Set(menuItemsArray.map((item:any)=>item.section))]
     setSections(sectionSet)
+
+    console.log("sectionSet",sectionSet)
   }
 
   useEffect(()=>{
@@ -32,20 +37,30 @@ const SideMenu = () => {
 
   const handleSelect = (selectedModule:any)=>{
     setSelectedItem(selectedModule)
-    console.log("selectedModule",selectedModule)
     dispatch(setCurrentModule(selectedModule))
+    dispatch(setCurrentPath(`/${selectedModule.link}`));
     navigateTo(`/${selectedModule.link}`)
   }
+
+  useEffect(()=>{
+    if(expanded){
+      setTimeout(()=>{
+        setShowMenu(true)
+      },100)
+    }else{
+      setShowMenu(false)
+    }
+  },[expanded])
 
 
   return (
 
     <div
     className="side-menu"
-    style={!expanded ? {width: "50px"} : {width: "300px"}}
+    style={!expanded ? {minWidth: "50px"} : {minWidth: "200px"}}
   >
 
-  <div className={`flex w-full ${expanded? "justify-end transition duration-1000" : "justify-center transition duration-500"}`}>
+  <div className="flex w-full">
     <div 
       className="flex h-[30px] w-[30px] cursor-pointer transition duration-500"
       style={expanded ? {transform: "scaleX(-1)"} :{transform: "scaleX(1)"}}
@@ -59,12 +74,11 @@ const SideMenu = () => {
     </div>
   </div>
 
-  {expanded && menuItems.length>0 &&
+  {showMenu && menuItems.length>0 &&
     sections.length>0 && sections.map((section:any, index:number)=>(
+      <div key={index+1} className="side-menu-section fade-in">
 
-      <div key={index+1} className={`side-menu-section ${expanded? "fade-in" : "fade-out"}`}>
-
-        {section.length > 1 && <label>{section}</label>}
+        {section.length > 1 && <label className="side-menu-label">{section}</label>}
         
         {menuItems.map((item:any)=>(
           item.section===section && 
@@ -93,6 +107,8 @@ const SideMenu = () => {
           ))
         }
       </div>
+    
+
     ))
   }
 </div>
