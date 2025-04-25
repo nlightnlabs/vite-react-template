@@ -1,0 +1,65 @@
+{
+    "module_1": {
+      "title": "Módulo 1",
+      "subtitle": "Subtítulo 1",
+      "description": "Esta é uma descrição detalhada do Módulo 1, como seu propósito, como funciona e como oferece valor ao usuário.",
+      "views": {
+        "view_1": "Visualização 1",
+        "view_2": "Visualização 2",
+        "view_3": "Visualização 3",
+        "view_4": "Visualização 5",
+        "view_5": "Visualização 5"
+      }
+    },
+    "module_2": {
+      "title": "Módulo 2",
+      "subtitle": "Subtítulo 2",
+      "description": "Esta é uma descrição detalhada do Módulo 2, como seu propósito, como funciona e como oferece valor ao usuário.",
+      "views": {
+        "view_1": "Visualização 1",
+        "view_2": "Visualização 2",
+        "view_3": "Visualização 3",
+        "view_4": "Visualização 5",
+        "view_5": "Visualização 5"
+      }
+    },
+    "module_3": {
+      "title": "Módulo 3",
+      "subtitle": "Subtítulo 3",
+      "description": "Esta é uma descrição detalhada do Módulo 3, como seu propósito, como funciona e como oferece valor ao usuário.",
+      "views": {
+        "view_1": "Visualização 1",
+        "view_2": "Visualização 2",
+        "view_3": "Visualização 3",
+        "view_4": "Visualização 5",
+        "view_5": "Visualização 5"
+      }
+    },
+    "module_4": {
+      "title": "Módulo 4",
+      "subtitle": "Subtítulo",
+      "description": "Esta é uma descrição detalhada do Módulo 4, como seu propósito, como funciona e como oferece valor ao usuário.",
+      "views": {
+        "view_1": "Visualização 1",
+        "view_2": "Visualização 2",
+        "view_3": "Visualização 3",
+        "view_4": "Visualização 5",
+        "view_5": "Visualização 5"
+      }
+    },
+    "labs": {
+      "title": "Laboratórios",
+      "subtitle": "Laboratórios",
+      "description": "Aplicações experimentais para fins de pesquisa e desenvolvimento",
+      "views": {
+        "sample_form": "Formulário de exemplo",
+        "send_email": "Enviar e-mail",
+        "record_manager": "Gerenciador de registros",
+        "dashboard": "Painel de controle",
+        "echarts": "Echarts",
+        "doc_animation": "Animação de documentos",
+        "sandbox": "sandbox"
+      }
+    }
+}
+  

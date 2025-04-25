@@ -1,10 +1,16 @@
 import {useState, useEffect} from 'react'
+import { useTranslation } from 'react-i18next'
+import "../i18n.ts"
 
 
 const TopMenu = (props:any) => {
 
+  const { t } = useTranslation("modules")
+
+  const module = props.module
+
   const [menuItems, setMenuItems] = useState<any>([])
-  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [selectedItem, setSelectedItem] = useState<any>(props.currentItem)
 
   const getMenuItems = async ()=>{
     setMenuItems(props.menuItems)
@@ -19,7 +25,7 @@ const TopMenu = (props:any) => {
     getMenuItems()
   },[props])
 
- 
+
   return (
     <div className="top-menu mt-5">
       
@@ -29,7 +35,7 @@ const TopMenu = (props:any) => {
             className={selectedItem && selectedItem.id == item.id ? "top-menu-item-selected": "top-menu-item"}
             onClick={()=>handleSelectedItem(item)}
           >
-            {item.label}
+            {t(`${module.name}.views.${item.name}`)}
           </div>
         ))
       }

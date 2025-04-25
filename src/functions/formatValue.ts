@@ -1,43 +1,28 @@
-export const formatValue = (inputValue:string | number, format:string, currencySymbol:string, digits:number, abbreviate:boolean)=>{
+export const formatValue = (inputValue:string | number, prefix?:string | "", suffix?:string | "", digits?:number | 0, abbreviate?:boolean | false)=>{
     
-  const numericalValue:number = getValue(inputValue, format)
+  const numericalValue:number = getValue(inputValue)
 
   let formattedValue:string = ""
-  let prefix:string = ""
-  let suffix:string = ""
   let divisor:number = 1
   
-  if(format === "percent"){
-    suffix = "%"
-    divisor = (1/100)
-  }
-  
-  else{
-    if(format ==="currency"){
-      prefix = currencySymbol
-    }else{
-      prefix = ""
+  if(abbreviate){
+    if(numericalValue>=(10**12)){
+      divisor = 10**12
+      suffix = "T"
+    }else if(numericalValue>=(10**9)){
+      divisor = 10**9
+      suffix = "B"
+    }else if(numericalValue>=(10**6)){
+      divisor = 10**6
+      suffix = "M"
+    }else if(numericalValue>=(1000)){
+      divisor = 1000
+      suffix = "K"
     }
-    
-    if(abbreviate){
-      if(numericalValue>=(10**12)){
-        divisor = 10**12
-        suffix = "T"
-      }else if(numericalValue>=(10**9)){
-        divisor = 10**9
-        suffix = "B"
-      }else if(numericalValue>=(10**6)){
-        divisor = 10**6
-        suffix = "M"
-      }else if(numericalValue>=(1000)){
-        divisor = 1000
-        suffix = "K"
-      }
-      else{
-        divisor = 1
-        suffix = ""
-      }
-  }
+    else{
+      divisor = 1
+      suffix = ""
+    }
   
   }
   formattedValue = `${prefix}${parseFloat((numericalValue/divisor).toFixed(digits)).toLocaleString("en-US")}${suffix}`
@@ -45,7 +30,7 @@ export const formatValue = (inputValue:string | number, format:string, currencyS
 }
 
 
-export const getValue = (inputValue: string | number, format: string): number => {
+export const getValue = (inputValue: string | number): number => {
   let stringValue: string = String(inputValue).toLowerCase(); 
   let numericalValue: number = Number(parseFloat(stringValue.replace(/[^0-9.]/g, "")));
   let outputValue: number = 0;
@@ -53,11 +38,6 @@ export const getValue = (inputValue: string | number, format: string): number =>
   if (!inputValue) {
     outputValue = 0;
     return outputValue;
-  }
-
-  // Adjust for percentage formatting
-  if (format === "percent" || stringValue.includes("%") || stringValue.includes("pct") || stringValue.includes("percent")) {
-    return numericalValue / 100;
   }
 
   // Adjust for exponential formatting
@@ -220,36 +200,42 @@ function isDate(date:any) {
 }
 
 
-export const formatInput = (value:any, dataType:string) =>{
-  
-  let date:any = value
-  
-  if (dataType === "number" && !isNaN(date)) {
-      return parseFloat(value).toLocaleString("en-US");
+export const formatInput = (value: any, dataType: string) => {
+  let date: Date;
+
+  if (dataType === "number" && !isNaN(value)) {
+    return parseFloat(value).toLocaleString("en-US");
   } 
 
-  else if (dataType === "date" && !isNaN(Date.parse(date))) {
+  return value;
+}
 
-      const isValidDate = isDate(value)
-      if(!isValidDate){
-          date = new Date(value);
-      }
-      
-      const month:string = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-      const day:string = String(date.getDate()).padStart(2, '0');
-      const year:string = date.getFullYear();
-      return `${year}-${month}-${day}`;
+
+export const formatDate = (value: string)=>{
+
+    // Try parsing the input to a Date object
+    const date:any = new Date(value);
+
+    if (isNaN(date.getTime())) {
+      return value; // If invalid date, return original value
+    }
+
+    const month: string = String(date.getMonth() + 1).padStart(2, '0');
+    const day: string = String(date.getDate()).padStart(2, '0');
+    const year: number = date.getFullYear();
+
+    return `${month}-${day}-${year}`;
   } 
-  else if (dataType === "time") {
-      const date = new Date();
-      if (!isNaN(date.getTime())) {
-          let hours = date.getHours();
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const period = hours >= 12 ? "PM" : "AM";
-          hours = hours % 12 || 12; // Convert to 12-hour format
-          return `${hours}:${minutes} ${period}`;
+
+
+  export const formatTime = (value: string)=>{
+      const time = new Date(value);
+      if (!isNaN(time.getTime())) {
+        let hours = time.getHours();
+        const minutes = String(time.getMinutes()).padStart(2, '0');
+        const period = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+        return `${hours}:${minutes} ${period}`;
       }
   }
-  return value; // Return text or unrecognized types as-is
-
-}
+  

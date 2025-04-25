@@ -1,48 +1,37 @@
-import React, {useState, useEffect, useRef} from 'react'
-import { useSelector } from 'react-redux';
+import {useState, useEffect, useRef} from 'react'
 import * as styleFunctions from '../functions/styleFunctions'
 import * as formatValue from '../functions/formatValue'
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from 'react-datepicker'
 
 
-const MultiInput = (props) => {
+const MultiInput = (props:any) => {
 
 const updateParent  = props.onChange
 const list = props.list || []
 const [options, setOptions] = useState([])
-const theme = useSelector(state=>state.main.theme)
 
-const id = props.id || ""
-const name = props.name || ""
-const label = props.label || ""
-const type = props.type || "text"
+const name:string = props.name || ""
+const label:string = props.label || ""
+const type:string = props.type || "text"
 
-const labelSize = props.labelSize || 14
-const valueSize = props.valueSize || 14
-const labelColor = props.labelColor || null
-const valueColor = props.valueColor || null
-
-const width = props.width || null
-const height = props.height || 50
-const rows = props.rows || 20
+const rows:any = props.rows || 20
 
 const [value, setValue] = useState(props.value || "")
 const [showDropdown, setShowDropdown] = useState(false)
 
-const classNameMain = props.classNameMain || `input-maincontainer-theme-${theme}`
-const classNameInput = props.classNameInput || `input-input-theme-${theme}`
-const classNameLabel = props.classNameLabel || `input-label-theme-${theme}`
-const classNameDropdown = props.classNameDropdown || `input-dropdown-theme-${theme}`
-const classNameOption = props.classNameOption || `input-option-theme-${theme}`
+const classNameMain = props.classNameMain || `multiinput-maincontainer`
+const classNameInput = props.classNameInput || `multiinput-input`
+const classNameTextArea = props.classNameTextArea || `multiinput-textarea`
+const classNameLabel = props.classNameLabel || `multiinput-label`
+const classNameDropdown = props.classNameDropdown || `multiinput-choice-list`
+const classNameOption = props.classNameOption || `multiinput-option`
 const placeholder = props.placeholder || ""
 
-const required = props.required || false
-const disabled = props.disabled || false
-const readonly = props.readonly || false
-const abbreviate = props.abbreviate || false
+const required:boolean = props.required || false
+const disabled:boolean = props.disabled || false
+const readonly:boolean = props.readonly || false
 
-const dropdownRef = useRef()
+const dropdownRef = useRef<HTMLDivElement>(null)
 
 
 useEffect(()=>{
@@ -50,40 +39,23 @@ useEffect(()=>{
 },[props.value])
 
 useEffect(()=>{
+
 if (props.list && props.list.length>0){
+    props.list
     setOptions(props.list)
     }
 },[])
 
 
 const [inputData, setInputData] = useState({})
-const inputRef = useRef(null)
-const labelRef = useRef(null);
-const [inputProps, setInputProps] = useState({ 
-    width: props.width || "100%", 
-    height: props.labelFontSize + props.valueFontSize + 15 || 50, 
-    top: 0, 
-    left: 0,
-    padding: 5
-});
+const inputRef = useRef<HTMLInputElement>(null);
+const textAreaRef = useRef<HTMLTextAreaElement>(null);
+const labelRef = useRef<HTMLInputElement>(null);
 
-const [mainContainerStyle, setMainContainerStyle] = useState({
-    height: `${height}px`,
-    width: `${width}px`
-})
+
 const [labelStyle, setLabelStyle] = useState({});
-const [inputFontStyle, setInputFontStyle] = useState({
-    textAlign: "left",
-});
 
-useEffect(() => {
 
-  if (inputRef.current) {
-    const { width, height, top, left } = inputRef.current.getBoundingClientRect();
-    setInputProps({ width, height, top, left });
-  }
-
-}, []); 
 
 
 const handleInputClick = ()=>{
@@ -95,26 +67,28 @@ const handleInputClick = ()=>{
     }
 
     const labelFontSizeNum = parseFloat(styleFunctions.getFontSize(classNameLabel));
+    const valueFontSizeNum = parseFloat(styleFunctions.getFontSize(classNameInput));
+
     setLabelStyle({
-        fontSize: `${labelFontSizeNum * 0.75}px`,       // Shrink by 50%
-        transform: `translateY(-${labelFontSizeNum-5}px)`, // Move up by input font size
+        fontSize: `${labelFontSizeNum * 0.75}px`, 
+        transform: `translateY(-${valueFontSizeNum-5}px)`, // Move up by input font size
         transition: 'font-size 0.3s ease, transform 0.3s ease' // Smooth transition
       });
 }
 
-
-const handleLeave = (e)=>{
+const handleLeave = ()=>{
     setShowDropdown(false)
 }
 
-const changeLabelFontSize = (value) =>{
+const changeLabelFontSize = (value:any) =>{
 
     const labelFontSizeNum = parseFloat(styleFunctions.getFontSize(classNameLabel));
+    const valueFontSizeNum = parseFloat(styleFunctions.getFontSize(classNameInput));
 
     if(value && value.toString().length>0){
         setLabelStyle({
         fontSize: `${labelFontSizeNum * 0.75}px`,       // Shrink by 75%
-        transform: `translateY(-${labelFontSizeNum-5}px)`, // Move up by input font size
+        transform: `translateY(-${valueFontSizeNum-5}px)`, // Move up by input font size
         transition: 'font-size 0.3s ease, transform 0.3s ease' // Smooth transition
       });
     }
@@ -134,7 +108,7 @@ useEffect(()=>{
 
 
 
-const handleInputChange = (e)=>{
+const handleInputChange = (e:any)=>{
    
     let {name, value} = e.target
     setValue(value)
@@ -156,7 +130,7 @@ const handleInputChange = (e)=>{
 }
 
 
-const handleOptionClick = (item)=>{
+const handleOptionClick = (item:any)=>{
     console.log(item)
     setValue(item)
 
@@ -170,96 +144,131 @@ const handleOptionClick = (item)=>{
     handleInputChange(e)
 }
 
-useEffect(()=>{
-    setMainContainerStyle({...mainContainerStyle,
-        ...{"height":height}
-    })
-},[])
 
-const handleMouseLeave = (e)=>{
+
+const handleMouseLeave = ()=>{
+    setShowDropdown(false)
     if(type =="textarea" || "date"){
         changeLabelFontSize(value)
     }
 }
 
+const buildDateFromTime = (timeString:string) => {
+    if (!timeString || typeof timeString !== "string") return null;
+    const [hours, minutes, seconds] = timeString.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return null;
+    const now = new Date();
+    now.setHours(hours);
+    now.setMinutes(minutes);
+    now.setSeconds(seconds || 0);
+    now.setMilliseconds(0);
+    return now;
+  };
+
+
   return (
         <div 
             className={`${classNameMain}`} 
-            style={mainContainerStyle}
-            onMouseLeave = {(e)=>handleMouseLeave(e)}
+            onMouseLeave = {()=>handleMouseLeave()}
+            onClick = {()=>handleInputClick()}
         > 
             <div
                 ref = {labelRef}
-                id={`label_${id}`}
-                htmlFor={`input_${id}`}
                 className={`${classNameLabel}`}
                 style={labelStyle}
             >
                 {`${label}`} <span style={{color: "red"}}>{`${required ? "*" : ""}`}</span>
             </div>
-
-            {/* {type ==="date"?
-            <DatePicker
-                dateFormat="MM/d/yyyy"    
-                placeholderText={placeholder}
-                className={`datepicker-theme-${theme}`}
-                style={inputFontStyle}
-                id ={`input_${id}`}
-                name={name}
-                selected={value} // Bind selected date to state
-                onClick = {(e)=>handleInputClick()}
-                onChange={(date) => handleInputChange({ target: { name: 'start_date', value: new Date(date.setHours(0, 0, 0, 0))} })} // Call handleChange with a Date
-            /> */}
-
             {type ==="textarea"?
-            <textarea
-                ref={inputRef} 
-                className={classNameInput}
-                style={inputFontStyle}
-                id ={`input_${id}`}
-                name={name}
-                placeholdertext={placeholder}
-                value = {formatValue.formatInput(value, type)}
-                onChange = {(e)=>handleInputChange(e)}
-                onClick = {(e)=>handleInputClick()}
-                readOnly = {readonly}
-                disabled = {disabled}
-                autoComplete="off" 
-                rows={rows}
-            />
-            
+                <textarea
+                    ref={textAreaRef} 
+                    className={classNameTextArea}
+                    name={name}
+                    placeholder={placeholder}
+                    value = {value ? formatValue.formatInput(value, type) : ""}
+                    onChange = {(e)=>handleInputChange(e)}
+                    onClick = {()=>handleInputClick()}
+                    readOnly = {readonly}
+                    disabled = {disabled}
+                    autoComplete="off" 
+                    rows={rows}
+                />
             :
+            type ==="date" || type=="datetime" || type=="time"?
+            <DatePicker
+                className="w-full h-[50px] border-none focus:ring-0 focus:outline-none bg-transparent"
+                wrapperClassName="w-full h-[50px] border-none focus:ring-0 focus:outline-none bg-transparent"
+                name={name}
+                selected={
+                    type === "time"
+                      ? buildDateFromTime(value) // convert "HH:mm:ss" to Date
+                      : value
+                      ? new Date(value) // ISO string, date, datetime
+                      : null
+                  }
+                onChange={(date) => {
+                    if (!date) {
+                    handleInputChange({ target: { name, value: null } });
+                    return;
+                    }
 
+                    let formatted;
+                    if (type === "date") {
+                    formatted = date.toISOString().split("T")[0]; // "2025-04-02"
+                    } else if (type === "datetime") {
+                    formatted = date.toISOString(); // "2025-04-02T07:00:00.000Z"
+                    } else if (type === "time") {
+                    formatted = date.toISOString().split("T")[1].split("Z")[0].split(".")[0]; // "07:00:00"
+                    } else {
+                    formatted = date;
+                    }
+
+                    handleInputChange({ target: { name, value: formatted } });
+                }}
+                dateFormat={
+                    type === "date"
+                    ? "MM/dd/yyyy"
+                    : type === "datetime"
+                    ? "MM/dd/yyyy h:mm aa"
+                    : type === "time"
+                    ? "h:mm aa"
+                    : "MM/dd/yyyy"
+                }
+                showTimeSelect={type === "datetime" || type === "time"}        // 👈 Needed for time picker
+                showTimeSelectOnly={type === "time"}                           // 👈 Time-only mode
+                timeIntervals={15}
+                timeCaption="Time"
+                autoComplete="off"
+            />
+            :
             <input 
                 ref={inputRef} 
                 className={classNameInput}
-                style={inputFontStyle}
-                id ={`input_${id}`}
                 name={name}
-                placeholdertext={placeholder}
+                placeholder={placeholder}
                 value = {value ? formatValue.formatInput(value, type) : ""}
-                type={type==="password"? "password": "text"}
+                type={type ==="password" ? "password" : "text"}
                 onChange = {(e)=>handleInputChange(e)}
-                onClick = {(e)=>handleInputClick()}
+                onClick = {()=>handleInputClick()}
                 readOnly = {readonly}
                 disabled = {disabled}
                 autoComplete="off" 
             />
-        }
-        {showDropdown && options.length>0 &&  type !=="date" &&
-            <div id="dropdown" ref={dropdownRef} className={classNameDropdown}  style={{height:"200px", top: `${inputProps.height}px`}} onMouseLeave={()=>handleLeave()}>
-                {options.map((item,index)=>(
-                    <div 
-                        key={index} 
-                        className={`${classNameOption} fade-in`}
-                        onClick={(e)=>handleOptionClick(item)}
-                        >
-                        {item}
-                    </div>
-                ))}
+            }
+            {showDropdown && options.length>0 &&  type !=="date" &&
+                <div id="dropdown" ref={dropdownRef} className={classNameDropdown} onMouseLeave={()=>handleLeave()}>
+                    {options.map((item,index)=>(
+                        <div 
+                            key={index} 
+                            className={`${classNameOption} fade-in`}
+                            onClick={()=>handleOptionClick(item)}
+                            >
+                            {item}
+                        </div>
+                    ))}
             </div>
-        }
-    </div>
+            }
+        </div>
   )
 }
 

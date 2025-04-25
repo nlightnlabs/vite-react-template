@@ -9,6 +9,7 @@ interface PropTypes {
   currentUser: any,
   theme: string,
   logo: string,
+  language: string,
   pages: string[],
   currentPage: string,
   currentModule: any,
@@ -25,6 +26,7 @@ const initialState:PropTypes = {
   currentUser: null,
   theme: config.theme,
   logo: config.logo,
+  language: config.language,
   pages: [],
   currentPage: "home",
   currentModule: config.currentModule,
@@ -55,6 +57,9 @@ const mainSlice = createSlice({
     },
     setLogo: (state, action) => {
       state.logo = action.payload;
+    },
+    setLanguage: (state, action) => {
+      state.language = action.payload;
     },
     setPages: (state, action) => {
       state.pages = action.payload;
@@ -91,6 +96,7 @@ export const {
   setCurrentUser,
   setTheme,
   setLogo,
+  setLanguage,
   setPages,
   setCurrentPage,
   setCurrentModule,

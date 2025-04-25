@@ -1,18 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as mainApi from '../apis/pythonServerApi.js';
 import * as styleFunctions from '../functions/styleFunctions.js';
 import {useSelector} from 'react-redux'
 
+interface propTypes{
+  recording: any,
+  setRecording: (recording:any)=>void
+  setTranscription: (transcription:any)=>void
+}
 
-const VoiceRecorder = ({ recording, setTranscription }) => {
+const VoiceRecorder = ({ recording, setTranscription }:propTypes) => {
 
-  const theme = useSelector(state=>state.main.theme)
+  const theme = useSelector((state:any)=>state.main.theme)
 
-  const [audioChunks, setAudioChunks] = useState([]);
-  const mediaRecorderRef = useRef(null); // Use useRef for mediaRecorder
-  const canvasRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
+  const [audioChunks, setAudioChunks] = useState<any>([]);
+  const mediaRecorderRef = useRef<any>(null); // Use useRef for mediaRecorder
+  const canvasRef = useRef<any>(null);
+  const audioContextRef = useRef<any>(null);
+  const analyserRef = useRef<any>(null);
 
   // let audioChunks = []
 
@@ -33,7 +38,7 @@ const VoiceRecorder = ({ recording, setTranscription }) => {
     
     recorder.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) {
-        setAudioChunks((prev) => [...prev, e.data]);
+        setAudioChunks((prev:any) => [...prev, e.data]);
       }
     };
   
@@ -50,7 +55,7 @@ const VoiceRecorder = ({ recording, setTranscription }) => {
     const recorder = mediaRecorderRef.current;
     if (recorder) {
       // Collect all audio chunks and process them when recording stops
-      recorder.ondataavailable = (e) => {
+      recorder.ondataavailable = (e:any) => {
         if (e.data && e.data.size > 0) {
           const audioBlob = new Blob([e.data], { type: 'audio/webm' }); // Create Blob directly
           console.log("Audio Blob:", audioBlob);
@@ -128,7 +133,7 @@ const VoiceRecorder = ({ recording, setTranscription }) => {
   };
 
   // Transcribe audio
-  const transcribeAudio = async (audioBlob) => {
+  const transcribeAudio = async (audioBlob:any) => {
     console.log("transcribing audio")
     try {
       const response = await mainApi.convertAudioToText(audioBlob);
@@ -145,7 +150,7 @@ const VoiceRecorder = ({ recording, setTranscription }) => {
     if (recording) {
       startRecording();
     } else {
-      stopRecording(audioChunks);
+      stopRecording();
     }
   }, [recording]); // Trigger on recording state change
 

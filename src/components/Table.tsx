@@ -2,56 +2,44 @@ import {useState, useEffect, useRef} from 'react'
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'; 
 ModuleRegistry.registerModules([AllCommunityModule]);
 import { AgGridReact } from 'ag-grid-react'; // React Data Grid Component
-import { toProperCase } from '../functions/formatValue';
-
+import {useSelector} from 'react-redux';
+import {config} from '../config.ts'
 
 const Table = (props:any) => {
 
+  const theme:string = useSelector((state:any) => state.main.theme);
+  const agGridTheme:string = config.themes.find((item:any) => item.name === theme)?.ag_grid || "ag-theme-alpine"; 
 
   const gridRef = useRef<any>(null);
-  const includeRowSelect = props.includeRowSelect || false
   const selectedRows = props.selectedRows || null; 
   const onCellClicked = props.onCellClicked || null;
   const onCellEdit = props.onCellEdit || null
   const onRowSelected = props.onRowSelected || null; // New prop for row selection callback
-  const formatHeader = props.formatHeader || false;
 
   const [rowData, setRowData] = useState([...props.data]);
+  const [dataModel, setDataModel] = useState([...props.dataModel]);
 
   const tableFieldOptions = props.tableFieldOptions || [];
   const hiddenColumns = props.hiddenColumns || []
-  const columnDefs = [];
+  const columnDefs:any[] = [];
 
   useEffect(() => {
     setRowData(props.data);
-  }, [props.data]);
-
-
-  if (includeRowSelect){
-    const selectField = {
-      field: "select",
-      headerName: "Include",
-      cellStyle: { textAlign: 'center' },
-      width: 100,
-      editable: true,
-      cellRenderer: 'agCheckboxCellRenderer',
-      resizable: false,
-      suppressSizeToFit: true,
-    };
-    columnDefs.push(selectField)
-  }
+    setDataModel(props.dataModel)
+  }, [props.data, props.dataModel]);
 
   if (rowData.length > 0) {
 
-    Object.keys(rowData[0]).forEach((field) => {
+    dataModel.forEach((field) => {
       
-      if (!hiddenColumns.includes(field)){
+      if (!hiddenColumns.includes((field.field_name))){
 
-        const fieldOptions = tableFieldOptions.find((item:any) => item.name === field);
-      
+        const fieldOptions = tableFieldOptions.find((item:any) => item.name === field.field_name);
+        fieldOptions && console.log("fieldOptions", fieldOptions)
+
         columnDefs.push({
-          field: field,
-          headerName: formatHeader ? toProperCase(field.replace(/["_"]/g," ")) : field,
+          field: field.field_name,
+          headerName: field.label,
           editable: true,
           sortable: true,
           filter: true,
@@ -63,8 +51,6 @@ const Table = (props:any) => {
           headerClass: "ag-header-cell",
           cellStyle: { 
               textAlign: 'center', 
-              color: "black",
-              backgroundColor:  "white",
           },
           sort: fieldOptions  ?  fieldOptions.sortOrder : null
         });
@@ -94,8 +80,6 @@ const Table = (props:any) => {
   };
   
   
-
-
   const handleSelectionChange = (event:any) => {
     const source = event.source
     const updatedSelection = event.api.getSelectedNodes().map((node:any) => node.data);
@@ -118,9 +102,10 @@ const Table = (props:any) => {
     }
   };
 
+
   return (
     <div
-      className="transtion duration-500" 
+      className={`${agGridTheme} transtion duration-300`} 
       style={{ height: "100%", width:"100%" }}>
         <AgGridReact
             ref={gridRef}

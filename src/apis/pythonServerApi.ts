@@ -1,7 +1,7 @@
 import axios from "axios";
 import {config} from '../config.ts'
-
 import * as formatValue from '../functions/formatValue.ts'
+
 
 export const baseURL = process.env.NODE_ENV==="production" ? "https://nlightnlabs.net/dealprep" : "http://localhost:8001"
 
@@ -9,20 +9,20 @@ export const baseURL = process.env.NODE_ENV==="production" ? "https://nlightnlab
 export const serverConnection = axios.create({
   baseURL,
 })
-
 const dbName = config.dbName
+export const s3url = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/dealprep"
 export const s3Bucket = "nlightnlabs01"
-export const images = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/icons/images"
-export const icons = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/icons/icons"
-export const s3url = "https://nlightnlabs01.s3.us-west-1.amazonaws.com/mysalesteam"
 export const s3RootFolder = "dealprep"
+export const images = `${s3url}/icons/images`
+export const icons = `${s3url}/icons/icons`
+
+
 
 // Run python app
 export const pythonApp = async (app_name:string, main_function:string, parameters:Object) =>{
 
     try {
       const response = await serverConnection.post('/runApp', { app_name, main_function, parameters });
-      console.log(response); 
       return response.data;
     } catch (error) {
       console.error('Error calling the Python app:', error);
@@ -31,11 +31,16 @@ export const pythonApp = async (app_name:string, main_function:string, parameter
   }
 
 //General Query
-export const getData = async (query:string)=>{
+export const getData = async (query:string, schema:string="public")=>{
+
+  const payload={
+    dbName,
+    schema,
+    query
+  }
 
   try{
-    const result = await serverConnection.post("/db/query",{query,dbName})
-    console.log(result)
+    const result = await serverConnection.post("/db/query",payload)
     const data = await result.data
     return (data)
   }catch(error){
@@ -47,14 +52,14 @@ export const getData = async (query:string)=>{
 //Get Table
 export const getTable = async (tableName:string, schema:string="public")=>{
     const payload = {
-      tableName,
+      dbName,
       schema,
-      dbName
+      query: `SELECT * FROM ${schema}.${tableName};`
     }
 
     try{
       const response = await serverConnection.post(`/db/query`,payload)
-      // console.log(response)
+      console.log(response)
       return (response.data)
     }catch(error){
       console.log(error)
@@ -63,10 +68,17 @@ export const getTable = async (tableName:string, schema:string="public")=>{
 
 
 //Get List
-export const getList = async (tableName:string, fieldName:string)=>{
+export const getList = async (tableName:string, fieldName:string, schema:string="public")=>{
+
+  const payload = {
+    dbName,
+    schema,
+    fieldName,
+    tableName
+  }
   
   try{
-    const response = await serverConnection.post(`/db/list`,{tableName, fieldName, dbName})
+    const response = await serverConnection.post(`/db/list`,payload)
     return (response.data)
   }catch(error){
     console.log(error)
@@ -74,12 +86,10 @@ export const getList = async (tableName:string, fieldName:string)=>{
 }
 
 //Create New Record
-export const addRecord = async (tableName:string, columnValues:object)=>{
-  
+export const addRecords = async (tableName:string, columnValues:object)=>{
   if(tableName.length > 0 && Object.entries(columnValues).length>0){
     try{
       const result = await serverConnection.post("/db/insert",{tableName, columnValues})
-      console.log(result)
       const data = await result.data
       return (data)
     }catch(error){
@@ -91,45 +101,54 @@ export const addRecord = async (tableName:string, columnValues:object)=>{
 }
 
 //Update Record
-export const updateRecord = async (tableName:string, record:any, whereClause:string)=>{
-
+export const updateRecords = async (
+  tableName: string,
+  records: any,
+  whereClause: any[],
+  dataModel?:any,
+  schema: string = "public"
+): Promise<any> => 
+{
+  
   const payload = {
-      tableName: tableName, 
-      columns: Object.keys(record), 
-      getRandomValues: Object.values(record), 
-      whereClause: whereClause, 
-      dbName: dbName
+    tableName,
+    records,
+    whereClause,
+    dataModel,
+    schema,
+    dbName
+  };
+
+  console.log("Update Payload:", payload);
+
+  try {
+    const response = await serverConnection.post("/db/update", payload);
+    console.log("Update Response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Update Failed:", error);
+    throw error; // Optional: rethrow so calling function can handle
+  }
+};
+
+
+//Delete Record
+export const deleteRecords = async (tableName:string, records:any, whereClause:string[], schema:string="public")=>{
+ 
+  const payload={
+    tableName,
+    records,
+    whereClause,
+    schema,
+    dbName
   }
 
   console.log(payload)
 
-    try{
-      const response = await serverConnection.post("/db/update",payload)
-      console.log(response.data)
-      return response.data
-    }catch(error){
-      console.log(error)
-    }
-}
-
-//Delete Record
-export const deleteRecord = async (tableName:string, whereClause:string)=>{
-  `payload
-  {
-    "tableName": "employees", 
-    "whereClause": "name = 'Alice'", 
-    "dbName": "oomnielabs"
-  }
-  `
-
-  const payload={
-    tableName: tableName, 
-    whereClause: whereClause,
-    dbName: dbName
-  }
-
   try{
-    const result = await serverConnection.post("/db/delete",payload)
+    const result = await serverConnection.delete("/db/delete",{
+      data: payload
+    })
     // console.log(result)
     const data = await result.data
     return (data)
@@ -145,13 +164,14 @@ export const getAllTables = async(schema:string="public")=>{
   const query= `SELECT table_name FROM information_schema.tables where table_schema = '${schema}';`
 
   const payload = {
-    "dbName": dbName,
-    "query": query
-  }
+    schema,
+    dbName,
+    query
+  };
 
   try{
     const result:any = await serverConnection.post("/db/query",payload)
-
+    console.log(result)
     const tables:any = []
     const data = result.data
     data.map((item:any)=>{
@@ -186,13 +206,16 @@ export const getColumnData = async(tableName:string)=>{
 
 
 //Authenticate User
-export const authenticateUser = async(username:string, password:string)=>{
+export const authenticateUser = async(username:string, password:string, tableName:string="users")=>{
 
   const payload = {
-    username,
-    password,
+    userRecord: {
+      username,
+      password,
+    },
     dbName: dbName,
-    schema: "public"
+    schema: "public",
+    tableName
   }
 
 

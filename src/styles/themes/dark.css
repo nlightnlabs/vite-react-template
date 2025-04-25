@@ -1,5 +1,8 @@
+
+
 .dark {
-    --font-size: 14px;
+    --font-size: 16px;
+    --multiinput-height: 50px;
     --background-color: black;
     --secondary-background-color: rgb(30,30,30);
     --tertiary-background-color: rgb(50,50,50);
@@ -43,8 +46,8 @@
     --top-menu-item-highlight-background-color: rgb(100,100,100);
     --subtitle-color: rgb(150,150,150);
     --label-color: rgb(17, 9, 9);
-    --panel-background-color: rgb(25,25,25);
-    --panel-box-shadow: 5px 5px 10px rgba(30,30,30,0.5);
+    --panel-background-color: rgb(30,30,30);
+    --panel-box-shadow: 5px 5px 10px rgba(30,30,30,0);
     --panel-border: 1px solid rgb(30,30,30);
     --primary-button-background-color: rgb(200,200,200);
     --primary-button-color: black;
@@ -66,9 +69,11 @@
     --top-menu-icon-hover-color: white;
     --side-menu-icon-color: rgb(100,100,100);
     --side-menu-icon-hover-color: rgb(200,200,200);
-    --input-color: rgb(0,150,225);
-    --input-background-color: rgb(15,15,15);
-    --input-border: 1px solid rgb(30,30,30);
+    --subtitle-color: rgb(150,150,150);
+    --label-color: rgb(200,200,200);
+    --input-color: rgb(0,200,245);
+    --input-background-color: rgb(50,50,50);
+    --input-border: 1px solid rgb(50,50,50);
     --textarea-color: rgb(0,150,225);
     --textarea-background-color: rgb(15,15,15);
     --textarea-border: 1px solid rgb(30,30,30);
@@ -99,5 +104,14 @@
       black 5px,
       rgb(25,25,25) 5px,
       rgb(25,25,25) 10px
-    )
+    );
+    --chart-title-color : white;
+    --chart-subtitle-color: lightgray;
+    --chart-labels-color: lightgray;
+    --chart-horizontal-axis-title-color: white;
+    --chart-vertical-axis-title-color: white;
+    --chart-vertical-axis-color: rgb(100,100,100);
+    --chart-hoirzontal-axis-color: rgb(100,100,100);
+    --chart-grid-color: rgb(100,100,100);
+    --chart-legend-color: rgb(100,100,100);
   }

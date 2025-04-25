@@ -1,0 +1,56 @@
+{
+    "module_1": {
+      "title": "Modulo 1",
+      "subtitle": "Sottotitolo 1",
+      "section": "Applicazioni",
+      "description": "Questa è una descrizione dettagliata del Modulo 1, come il suo scopo, come funziona e come offre valore all'utente.",
+      "views": {
+        "view_1": "Vista 1",
+        "view_2": "Vista 2",
+        "view_3": "Vista 3",
+        "view_4": "Vista 4",
+        "view_5": "Vista 5"
+      }
+    },
+    "module_2": {
+      "title": "Software",
+      "subtitle": "Sottotitolo 2",
+      "section": "Applicazioni",
+      "description": "Questa è una descrizione dettagliata del Modulo 2, come il suo scopo, come funziona e come offre valore all'utente.",
+      "views": {
+        "view_1": "Vista 1",
+        "view_2": "Vista 2",
+        "view_3": "Vista 3",
+        "view_4": "Vista 4",
+        "view_5": "Vista 5"
+      }
+    },
+    "module_3": {
+      "title": "Modulo 3",
+      "subtitle": "Sottotitolo 3",
+      "section": "Applicazioni",
+      "description": "Questa è una descrizione dettagliata del Modulo 3, come il suo scopo, come funziona e come offre valore all'utente.",
+      "views": {
+        "view_1": "Vista 1",
+        "view_2": "Vista 2",
+        "view_3": "Vista 3",
+        "view_4": "Vista 4",
+        "view_5": "Vista 5"
+      }
+    },
+    "labs": {
+      "title": "Laboratori",
+      "subtitle": "Laboratori",
+      "section": "Amministrazione",
+      "description": "Applicazioni sperimentali per scopi di ricerca e sviluppo",
+      "views": {
+        "sample_form": "Modulo di esempio",
+        "send_email": "Invia email",
+        "record_manager": "Gestore di record",
+        "dashboard": "Dashboard",
+        "echarts": "Echarts",
+        "doc_animation": "Animazione del documento",
+        "sandbox": "sandbox"
+      }
+    }
+}

@@ -1,4 +1,6 @@
 import {useEffect} from 'react'
+import { useTranslation } from "react-i18next";
+import "../../i18n.ts"
 import { Routes, Route, useNavigate } from "react-router-dom";
 import TopMenu from "../../components/TopMenu.tsx";
 import View1 from "./View1.tsx";
@@ -9,10 +11,13 @@ import View5 from "./View5.tsx";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentView, setCurrentPath } from "../../redux/slices/mainSlice.ts";
 
-const Module1 = () => {
+const App = () => {
+
+  const { t } = useTranslation("modules");
   const navigateTo = useNavigate();
 
   const currentModule = useSelector((state:any)=>state.main.currentModule)
+  const currentVeiw = useSelector((state:any)=>state.main.currentView)
 
   const views = [
     { id: 1, name: "view_1", label: "View 1", link: "view_1", icon: "", component: <View1 /> },
@@ -28,20 +33,27 @@ const Module1 = () => {
     dispatch(setCurrentView(selectedView))
     const path = `/${currentModule.link}/${selectedView.link}`
     dispatch(setCurrentPath(path))
-    navigateTo(path); // ✅ Use absolute path
+    navigateTo(path); 
   };
 
   useEffect(()=>{
-    handleSelectView(views[0])
+    const initialView = currentVeiw !=null ? currentVeiw : views[0]
+    handleSelectView(initialView)
   },[])
 
   return (
     <div className="page flex-col fade-in">
-      <h2>{currentModule.label}</h2>
-      <TopMenu menuItems={views} handleSelectedItem={handleSelectView} />
+    
+      <h2>{t(currentModule.title)}</h2>
+      <TopMenu 
+        module={currentModule} 
+        currentItem={currentVeiw} 
+        menuItems={views} 
+        handleSelectedItem={handleSelectView} 
+      />
 
       <Routes>
-        <Route path="/" element={<View1 />} /> {/* Default View */}
+        {/* <Route path="/" element={<View1 />} /> */}
         <Route path="view_1" element={<View1 />} />
         <Route path="view_2" element={<View2 />} />
         <Route path="view_3" element={<View3 />} />
@@ -52,4 +64,4 @@ const Module1 = () => {
   );
 };
 
-export default Module1;
+export default App;

@@ -1,33 +1,38 @@
-import React, {useState} from 'react'
+import {useState} from 'react'
 import { useSelector } from 'react-redux';
-import VoiceRecorder from './VoiceRecord.js';
+import VoiceRecorder from './VoiceRecord.tsx';
 import * as styleFunctions from '../functions/styleFunctions.js'
-import Svg from './Svg.js'
-import * as mainApi from '../apis/pythonServerApi.js'
+import Svg from './Svg.tsx'
+import * as mainApi from '../apis/pythonServerApi.ts'
 
-const VoiceInput = ({label, value, setValue, setResponse}) => {
+interface propTypes{
+  label:string, 
+  value:string, 
+  setValue: (text:any)=>void
+  setResponse: (text:any)=>void
+}
 
-  const theme = useSelector(state=>state.main.theme)
-  const user = useSelector(state=>state.main.user)
+const VoiceInput = ({label, value, setValue, setResponse}:propTypes) => {
 
-  const [inputHeight, setInputHeight] = useState("auto")
-  const [transcription, setTranscription] = useState(null)
-  const [recording, setRecording] = useState(false)
-  const [LLM, setLLM] = useState(null)
-  const [data, setData] = useState(null)
-  const [recordIconFileName, setRecordIconFileName] = useState("MicrophoneIcon")
+  const theme = useSelector((state:any)=>state.main.theme)
+
+  const [inputHeight, setInputHeight] = useState<any>("auto")
+  const [transcription, setTranscription] = useState<any>(null)
+  const [recording, setRecording] = useState<any>(false)
+  const [LLM, setLLM] = useState<any>(null)
+  const [data, setData] = useState<any>(null)
+  const [recordIconFileName, setRecordIconFileName] = useState<any>("MicrophoneIcon")
   
-  const handleChange = (e)=>{
+  const handleChange = (e:any)=>{
     setValue(e.target.value)
   }
 
   const handleSubmit = async () => {
-    console.log(value)
     const userInput = value
     let streamedResponse = "";
     const chunk = await mainApi.askGPT(userInput, data, LLM)
     streamedResponse += chunk
-    setResponse((prev) => prev + chunk); // Incremental rendering
+    setResponse((prev:any) => prev + chunk); // Incremental rendering
   };
   
 
@@ -56,7 +61,7 @@ const VoiceInput = ({label, value, setValue, setResponse}) => {
                   height = "30px"
                   width = "30px"
                   fillColor = {recording ? "red" : styleFunctions.getColor(`icon`)}
-                  fillOpacity = "1"
+                  fillOpacity = {1}
                 />
             </div>
 
@@ -77,25 +82,23 @@ const VoiceInput = ({label, value, setValue, setResponse}) => {
                     handleSubmit(); // Call your handleSubmit function
                   }
                 }}
-                outline="none"
                 autoComplete="off"
               />}
 
               <VoiceRecorder 
                 recording={recording} 
-                setRecording={setRecording} 
                 setTranscription={setValue}
               />
 
             </div>
 
-            <div onClick={(e)=>handleSubmit(e)} title="Generate" className="flex items-center justify-center p-2">
+            <div onClick={()=>handleSubmit()} title="Generate" className="flex items-center justify-center p-2">
               <Svg
                 iconName ="SendIcon"
                 height = "30px"
                 width = "30px"
                 fillColor = {styleFunctions.getColor(`icon`)}
-                fillOpacity = "1"
+                fillOpacity = {1}
               />
             </div>
 
@@ -105,7 +108,7 @@ const VoiceInput = ({label, value, setValue, setResponse}) => {
                 height = "30px"
                 width = "30px"
                 fillColor = {styleFunctions.getColor(`icon`)}
-                fillOpacity = "1"
+                fillOpacity = {1}
               />
             </div>
         </div>

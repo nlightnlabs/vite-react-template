@@ -1,0 +1,58 @@
+{
+    "module_1": {
+      "title": "Module 1",
+      "subtitle": "Sous-titre 1",
+      "section": "Apps",
+      "description": "Ceci est une description détaillée du Module 1, comme son objectif, son fonctionnement et la valeur qu'il apporte à l'utilisateur.",
+      "views": {
+        "view_1": "Vue 1",
+        "view_2": "Vue 2",
+        "view_3": "Vue 3",
+        "view_4": "Vue 4",
+        "view_5": "Vue 5"
+      }
+    },
+    "module_2": {
+      "title": "Module 2",
+      "subtitle": "Sous-titre 2",
+      "section": "Apps",
+      "description": "Ceci est une description détaillée du Module 2, comme son objectif, son fonctionnement et la valeur qu'il apporte à l'utilisateur.",
+      "views": {
+        "view_1": "Vue 1",
+        "view_2": "Vue 2",
+        "view_3": "Vue 3",
+        "view_4": "Vue 4",
+        "view_5": "Vue 5"
+      }
+    },
+    "module_3": {
+      "title": "Module 3",
+      "subtitle": "Sous-titre 3",
+      "section": "Apps",
+      "description": "Ceci est une description détaillée du Module 3, comme son objectif, son fonctionnement et la valeur qu'il apporte à l'utilisateur.",
+      "views": {
+        "view_1": "Vue 1",
+        "view_2": "Vue 2",
+        "view_3": "Vue 3",
+        "view_4": "Vue 4",
+        "view_5": "Vue 5"
+      }
+    },
+    "labs": {
+      "title": "Laboratoires",
+      "subtitle": "Laboratoires",
+      "section": "Admin",
+      "description": "Applications expérimentales à des fins de recherche et développement",
+      "views": {
+        "sample_form": "Formulaire d'exemple",
+        "send_email": "Envoyer un e-mail",
+        "record_manager": "Gestionnaire d'enregistrements",
+        "dashboard": "Tableau de bord",
+        "echarts": "Echarts",
+        "doc_animation": "Animation de documents",
+        "sandbox": "Sandbox"
+      }
+    }
+}
+  
+  

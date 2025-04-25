@@ -1,24 +1,29 @@
 import {useState, useEffect} from 'react'
 import * as mainApi from '../apis/pythonServerApi'
 import FloatingPanel from './FloatingPanel'
+import MultiInput from './MultiInput'
+
 
 interface propTypes {
     tableName:string, 
-    dataModel:object, 
+    data:any,
+    dataModel:any, 
     setDisplayForm:any, 
     hiddenFields?:string[]
 }
 
-const NewRecordForm = ({tableName, dataModel, setDisplayForm, hiddenFields}:propTypes)=>{
+const NewRecordForm = ({tableName, data, dataModel, setDisplayForm, hiddenFields}:propTypes)=>{
     
     const [formData, setFormData] = useState<any>({})
     const [successMessage, setSuccessMessage] = useState<any>(null)
 
     useEffect(() => {
+
+      console.log(dataModel)
     
         let updatedFormData = formData
-        Object.keys(dataModel).map((key:string)=>{
-            updatedFormData = {...updatedFormData,...{[key]:""}}
+        dataModel.map((item:any)=>{
+            updatedFormData = {...updatedFormData,...{[item.field_name]: {label: item.label, value: ""}}}
         })
 
         if (hiddenFields && hiddenFields.length >0){
@@ -33,30 +38,37 @@ const NewRecordForm = ({tableName, dataModel, setDisplayForm, hiddenFields}:prop
     }, []);
 
     const handleInputChange = (e:any)=>{
-      const [name, value] = e.target
-      setFormData({...formData,...{[name]:value}})
+      const {name, value} = e.target
+      const updatedValue = {...formData[name],...{"value":value}}
+      setFormData({...formData,...{[name]:updatedValue}})
     }
 
     const handleSubmit = async ()=>{
-      const response = await mainApi.addRecord(tableName,formData)
-      console.log(response)
+      const response = await mainApi.addRecords(tableName,formData)
       setSuccessMessage("New record has successfully been added")
     }
 
     return(
-      <div className="flex flex-col w-full h-auto mb-[150px] p-3">
-        
-        {/* Submit Button */}
-        <div className="flex w-full justify-end">
-          <button className="primary-button" onClick={()=>handleSubmit()}>Submit</button>
+      <div className="flex flex-col w-full mb-[150px] p-3">
+  
+        <div className="w-full overflow-y-auto">
+        {formData && Object.entries(formData).map(([k,v]:any, index)=>(
+          <MultiInput
+            key={index} 
+            label={v.label}
+            name={k}
+            value={v.value}
+            onChange={handleInputChange}
+          />
+        ))}
         </div>
 
-        {formData && Object.entries(formData).map(([k,v]:any, index)=>(
-          <div key={index} className="flex flex-col w-full mb-1 mt-1">
-            <label>{k}</label>
-            <input name={k} type="text" autoComplete="off" value={v} onChange={(e)=>handleInputChange(e)}></input>
+
+        {/* Submit Button */}
+        <div className="flex w-full justify-end mt-3">
+          <button className="secondary-button m-1" onClick={()=>setDisplayForm(false)}>Cancel</button>
+          <button className="primary-button m-1" onClick={()=>handleSubmit()}>Submit</button>
         </div>
-        ))}
 
         {successMessage &&
         <FloatingPanel displayPanel={setDisplayForm}>

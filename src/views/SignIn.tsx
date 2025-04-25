@@ -1,11 +1,16 @@
 import {useState} from 'react'
+import { useTranslation } from 'react-i18next';
+import "../i18n";
 import { useNavigate } from 'react-router-dom';
 import {useDispatch} from 'react-redux'
 import {setCurrentUser, setUserAuthenticated} from '../redux/slices/mainSlice'
 import { useSelector } from 'react-redux';
 import * as mainApi from '../apis/pythonServerApi'
 
+
 const SignIn = () => {
+
+  const { t } = useTranslation("signin");
 
   const appName = useSelector((state:any)=>state.main.appName)
 
@@ -54,22 +59,22 @@ const SignIn = () => {
       <div className="form w-[500px]">
       
         <div className="flex flex-col w-full mb-3">
-          <label>Username:</label>
+          <label>{t("user_name")}:</label>
           <input name="username" type="text" autoComplete="off" value={formData.username} onChange={(e)=>handleInputChange(e)} ></input>
         </div>
 
         <div className="flex flex-col w-full mb-3">
-          <label>Password:</label>
+        <label>{t("password")}:</label>
           <input name="pwd" type="password" autoComplete="off" value={formData.pwd} onChange={(e)=>handleInputChange(e)}></input>
         </div>
 
-        <button className="primary-button m-auto" onClick={()=>authenticateUser()}>Sign In</button>
+        <button className="primary-button m-auto" onClick={()=>authenticateUser()}>{t("signin")}</button>
 
         {errorMessage && <div className="flex text-red-500 mt-5">{errorMessage}</div>}
 
         <div className="flex w-full justify-center">
-          <span className="link m-3" onClick={()=>handleForgotPassword()}>Forgot Password</span>
-          <span className="link m-3" onClick={()=>handleCreateAccount()}>Create Account</span>
+          <span className="link m-3" onClick={()=>handleForgotPassword()}>{t("forgot_password")}</span>
+          <span className="link m-3" onClick={()=>handleCreateAccount()}>{t("create_account")}</span>
         </div>
 
       </div>

@@ -19,7 +19,9 @@ const style = {
         width="72" 
         height="73" 
         xmlns="http://www.w3.org/2000/svg" 
-        overflow="hidden">
+        overflow="hidden"
+        style={style}
+        >
             <g transform="translate(-328 -184)"><g><g><g><g>
                 <path d="M346.75 238.325C348.25 239.825 348.25 242.15 346.75 243.65L340.375 245.75 339.25 244.625 341.35 238.25C342.925 236.825 345.25 236.825 346.75 238.325ZM376.225 199.175 338.725 236.75 334 251 348.325 246.275 385.825 208.775" 
                     fill={fillColor? fillColor : "lightgray"} 

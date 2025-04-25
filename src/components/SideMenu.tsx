@@ -1,25 +1,30 @@
 import {useState, useEffect} from 'react';
+import { useTranslation } from 'react-i18next';
+import "../i18n.ts"
 import Svg from './Svg.js'
 import { useNavigate } from 'react-router-dom';
 import * as styleFunctions from '../functions/styleFunctions.js'
 import {config} from '../config.ts'
 import { useDispatch } from 'react-redux';
-import { setCurrentModule, setCurrentPath } from '../redux/slices/mainSlice.ts';
+import { setCurrentModule, setCurrentView } from '../redux/slices/mainSlice.ts';
+import { useSelector } from 'react-redux';
 
 const SideMenu = () => {
+
+  const { t } = useTranslation("modules");
+  const language = useSelector((state:any) => state.main.language)
 
   const [showMenu, setShowMenu] = useState(true)
   const [menuItems, setMenuItems] = useState<any>([])
   const [sections, setSections] = useState<any>([])
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [expanded, setExpanded] = useState(true)
-  const [hoveredItem, setHoveredItem] = useState<any>()
+  const [hoveredItem, setHoveredItem] = useState<any>(null)
  
   const getMenuItems = ()=>{
-    const menuItemsArray = config.sideMenuItems
+    const menuItemsArray = config.modules
     setMenuItems(menuItemsArray)
-
-    const sectionSet = [...new Set(menuItemsArray.map((item:any)=>item.section))]
+    const sectionSet = [...new Set(menuItemsArray.map((item:any)=>t(item.section)))]
     setSections(sectionSet)
   }
 
@@ -27,14 +32,18 @@ const SideMenu = () => {
       getMenuItems()
   },[])
 
+  useEffect(()=>{ 
+    getMenuItems()
+  },[language])
+
   const navigateTo = useNavigate()
   
   const dispatch = useDispatch()
 
   const handleSelect = (selectedModule:any)=>{
     setSelectedItem(selectedModule)
+    dispatch(setCurrentView(null))
     dispatch(setCurrentModule(selectedModule))
-    dispatch(setCurrentPath(`/${selectedModule.link}`));
     navigateTo(`/${selectedModule.link}`)
   }
 
@@ -52,9 +61,9 @@ const SideMenu = () => {
   return (
 
     <div
-    className="side-menu"
-    style={!expanded ? {minWidth: "50px"} : {minWidth: "200px"}}
-  >
+      className="side-menu"
+      style={!expanded ? {minWidth: "50px"} : {minWidth: "200px"}}
+    >
 
   <div className="flex w-full">
     <div 
@@ -70,14 +79,14 @@ const SideMenu = () => {
     </div>
   </div>
 
-  {showMenu && menuItems.length>0 &&
+  {menuItems.length>0 &&
     sections.length>0 && sections.map((section:any, index:number)=>(
       <div key={index+1} className="side-menu-section fade-in">
 
-        {section.length > 1 && <label className="side-menu-label">{section}</label>}
-        
+        {section.length > 1 && 
+        <label className="side-menu-label">{t(section)}</label>}
         {menuItems.map((item:any)=>(
-          item.section===section && 
+          t(item.section)===section && 
             <div 
               key={item.id}
               className={selectedItem && selectedItem.id ===item.id ? "side-menu-item-selected": "side-menu-item"}
@@ -89,22 +98,19 @@ const SideMenu = () => {
                 <Svg
                   iconName={item.icon_name}
                   fillColor={
-                      hoveredItem && hoveredItem.id == item.id ? styleFunctions.getColor("side-menu-icon-hover-color") : 
-                      selectedItem && selectedItem.id ===item.id ? styleFunctions.getColor("side-menu-item-selected")
-                      :styleFunctions.getColor("side-menu-icon") 
+                      hoveredItem && hoveredItem.id == item.id ? styleFunctions.getColor("side-menu-icon-selected") : 
+                      selectedItem && selectedItem.id ===item.id ? styleFunctions.getColor("side-menu-item-selected"):
+                      styleFunctions.getColor("side-menu-icon") 
                     }
                   height="35px"
                   width="35px"
                 />
               }
-              <span className="side-menu-label ms-1">{item.label}</span>
-              
-              </div>
+              {showMenu && <span className="side-menu-label ms-1">{t(item.title)}</span>}
+             </div>
           ))
         }
       </div>
-    
-
     ))
   }
 </div>

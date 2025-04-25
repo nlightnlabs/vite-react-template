@@ -1,3 +1,6 @@
+import '../i18n';
+import { useTranslation } from 'react-i18next';
+
 import Svg from '../components/Svg';
 import {useEffect, useState} from 'react'
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +12,8 @@ import { setCurrentModule } from '../redux/slices/mainSlice.ts';
 const modules = config.modules
 
 const Home = () => {
+
+  const { t } = useTranslation("modules");
   
   const theme = useSelector((state:any)=>state.main.theme)
 
@@ -18,7 +23,7 @@ const Home = () => {
 
   const handleCardClick = (module:any)=>{
     dispatch(setCurrentModule(module))
-    navigateTo(`/${module.name}`)
+    navigateTo(`/${module.link}`)
   }
 
   useEffect(()=>{
@@ -45,10 +50,10 @@ const Home = () => {
               fillColor = {styleFunctions.getColor("icon")}
             />}
           </div>
-          <label className="card-title">{item.title}</label>
-          <label className="card-subtitle">{item.subtitle}</label>
+          <label className="card-title">{t(item.title)}</label>
+          <label className="card-subtitle">{t(item.subtitle)}</label>
           <p className="card-text">
-              {item.description}
+              {t(item.description)}
           </p>
         </div>
       ))}

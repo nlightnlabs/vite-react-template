@@ -1,26 +1,37 @@
-import React, {useState} from 'react'
+import {useState} from 'react'
 import { useSelector } from 'react-redux';
 import VoiceRecorder from './VoiceRecord.js';
 import * as styleFunctions from '../functions/styleFunctions.js'
 import Svg from './Svg.js'
 import * as mainApi from '../apis/pythonServerApi.js'
+import { config } from '../config.js';
 
-const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCurrentTopic, chatHistory, setChatHistory, getChatHistory, topics, setTopics}) => {
+interface propTypes{
+  userInput:string,
+  setUserInput: (text:any)=>void
+  setResponse: (text:any)=>void
+  currentTopic:string,
+  setCurrentTopic: (text:any)=>void
+  chatHistory:any,
+  setChatHistory: (text:any)=>void
+  topics:any,
+  setTopics: (text:any)=>void
+  
+}
 
-  const theme = useSelector(state=>state.main.theme)
-  const user = useSelector(state=>state.main.user)
 
-  const [inputHeight, setInputHeight] = useState("auto")
-  const [transcription, setTranscription] = useState(null)
+const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCurrentTopic, chatHistory, setChatHistory, topics, setTopics}:propTypes) => {
+
+  const theme = useSelector((state:any)=>state.main.theme)
+  const user = useSelector((state:any)=>state.main.user)
+
   const [recording, setRecording] = useState(false)
-  const [prompt, setPrompt] = useState("")
   const [LLM, setLLM] = useState("oomniellm")
   const [data, setData] = useState(null)
   const [recordIconFileName, setRecordIconFileName] = useState("MicrophoneIcon")
   
-  const handleChange = (e)=>{
+  const handleChange = (e:any)=>{
     setUserInput(e.target.value)
-    setPrompt(e.target.value)
   }
 
   const handleSubmit = async () => {
@@ -28,22 +39,22 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
     let topic = currentTopic || "";
     let streamedResponse = "";
   
-    let chatRecord = {
+    const chatRecord = {
       id: chatHistory.length + 1,
       user: user.id,
       prompt: userInput,
       topic: topic,
       response: "",
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
     };
   
     setChatHistory([...chatHistory, chatRecord]);
   
     const chunk = await mainApi.askGPT(userInput, data, LLM)
     streamedResponse += chunk
-    setResponse((prev) => prev + chunk); // Incremental rendering
+    setResponse((prev:any) => prev + chunk); // Incremental rendering
 
-    setChatHistory((prevChatHistory) => {
+    setChatHistory((prevChatHistory:any) => {
       const updatedHistory = [...prevChatHistory];
       updatedHistory[updatedHistory.length - 1] = {
         ...updatedHistory[updatedHistory.length - 1],
@@ -54,14 +65,18 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
   
     try {
       if (topic === "") {
-        const topicPrompt = `General inference: Provide a title for the following text, focusing on the text itself without adding interpretations or answers:\n"""\n[${userInput}]\n"""\n\nPlease include the title only and limit the length of the title to 10 words or less.`;
-        const topicResponse = await mainApi.askGPT(topicPrompt, data, LLM)
+        const topicPrompt = `
+        General inference: Provide a title for the following text, 
+        focusing on the text itself without adding interpretations or answers:\n"""\n[${userInput}]\n"""\n\n
+        Include the title only and limit the length of the title to 10 words or less.
+        `;
+        const topicResponse:any = await mainApi.askGPT(topicPrompt, data, LLM)
         const topicText = (await topicResponse.text()).replace(/["']/g, "");
         topic = topicText.trim();
         chatRecord.topic = topic;
         setCurrentTopic(topic);
   
-        setChatHistory((prevChatHistory) => {
+        setChatHistory((prevChatHistory:any) => {
           const updatedHistory = [...prevChatHistory];
           updatedHistory[updatedHistory.length - 1] = {
             ...updatedHistory[updatedHistory.length - 1],
@@ -77,7 +92,7 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
       chatRecord.topic = topic;
       delete chatRecord.id;
       delete chatRecord.created_at;
-      await mainApi.addRecord("chats", chatRecord);
+      await mainApi.addRecords("chats", chatRecord);
 
     } catch (error) {
       console.error("Error fetching streamed data:", error);
@@ -94,7 +109,7 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
   }
 
   const handleReset = ()=>{
-    setTranscription("")
+ 
     setUserInput("")
     setResponse("")
     setData(null)
@@ -112,7 +127,7 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
                   height = "30px"
                   width = "30px"
                   fillColor = {recording ? "red" : styleFunctions.getColor(`icon-color-theme-${theme}`)}
-                  fillOpacity = "1"
+                  fillOpacity = {1}
                 />
             </div>
 
@@ -125,14 +140,13 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
                 value = {userInput}
                 placeholder = "Ask something..."
                 className={`flex w-full items-center outline-none text-[rgb(0,150,225)] bg-[rgba(0,0,0,0)] rounded-lg p-3 transition duration-500`}
-                style={{height: inputHeight}}
+                style={{height: "auto"}}
                 onChange = {(e)=>handleChange(e)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleSubmit(); // Call your handleSubmit function
                   }
                 }}
-                outline="none"
                 autoComplete="off"
               />}
 
@@ -146,13 +160,13 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
 
             
 
-            <div onClick={(e)=>handleSubmit(e)} title="Generate" className="flex items-center justify-center p-2">
+            <div onClick={()=>handleSubmit()} title="Generate" className="flex items-center justify-center p-2">
               <Svg
                 iconName ="SendIcon"
                 height = "30px"
                 width = "30px"
                 fillColor = {styleFunctions.getColor(`icon-color-theme-${theme}`)}
-                fillOpacity = "1"
+                fillOpacity = {1}
               />
             </div>
 
@@ -162,7 +176,7 @@ const PromptInput = ({userInput, setUserInput, setResponse, currentTopic, setCur
                 height = "30px"
                 width = "30px"
                 fillColor = {styleFunctions.getColor(`icon-color-theme-${theme}`)}
-                fillOpacity = "1"
+                fillOpacity = {1}
               />
             </div>
         </div>

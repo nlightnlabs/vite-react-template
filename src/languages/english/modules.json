@@ -1,0 +1,57 @@
+{
+    "module_1": {
+      "title": "Module 1",
+      "subtitle": "Subtitle 1",
+      "section": "Apps",
+      "description": "This is a detailed description of Module 1, such as its purpose, how it works, and how it provides value to the user.",
+      "views": {
+        "view_1": "View 1",
+        "view_2": "View 2",
+        "view_3": "View 3",
+        "view_4": "View 4",
+        "view_5": "View 5"
+      }
+    },
+    "module_2": {
+      "title": "Module 2",
+      "subtitle": "Subtitle 2",
+      "section": "Apps",
+      "description": "This is a detailed description of Module 2, such as its purpose, how it works, and how it provides value to the user.",
+      "views": {
+        "view_1": "View 1",
+        "view_2": "View 2",
+        "view_3": "View 3",
+        "view_4": "View 4",
+        "view_5": "View 5"
+    }
+  },
+    "module_3": {
+      "title": "Module 3",
+      "subtitle": "Subtitle 3",
+      "section": "Apps",
+      "description": "This is a detailed description of Module 3, such as its purpose, how it works, and how it provides value to the user.",
+      "views": {
+        "view_1": "View 1",
+        "view_2": "View 2",
+        "view_3": "View 3",
+        "view_4": "View 4",
+        "view_5": "View 5"
+    }
+  },
+    "labs": {
+      "title": "Labs",
+      "subtitle": "Labs",
+      "section": "Admin",
+      "description": "Experimental applications for research and development purposes",
+      "views":{
+        "sample_form": "Sample Form",
+        "send_email": "Send Email",
+        "record_manager": "Record Manager",
+        "dashboard": "Dashboard",
+        "echarts": "Echarts",
+        "doc_animation": "Document Animation",
+        "sandbox": "Sandbox"
+    }
+  }
+}
+  

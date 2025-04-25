@@ -1,0 +1,56 @@
+{
+    "module_1": {
+      "title": "Module 1",
+      "subtitle": "Ondertitel 1",
+      "section": "Toepassingen",
+      "description": "Dit is een gedetailleerde beschrijving van Module 1, zoals het doel, hoe het werkt en hoe het waarde biedt aan de gebruiker.",
+      "views": {
+        "view_1": "Weergave 1",
+        "view_2": "Weergave 2",
+        "view_3": "Weergave 3",
+        "view_4": "Weergave 4",
+        "view_5": "Weergave 5"
+      }
+    },
+    "module_2": {
+      "title": "Module 2",
+      "subtitle": "Ondertitel 2",
+      "section": "Toepassingen",
+      "description": "Dit is een gedetailleerde beschrijving van Module 2, zoals het doel, hoe het werkt en hoe het waarde biedt aan de gebruiker.",
+      "views": {
+        "view_1": "Weergave 1",
+        "view_2": "Weergave 2",
+        "view_3": "Weergave 3",
+        "view_4": "Weergave 4",
+        "view_5": "Weergave 5"
+      }
+    },
+    "module_3": {
+      "title": "Module 3",
+      "subtitle": "Ondertitel 3",
+      "section": "Toepassingen",
+      "description": "Dit is een gedetailleerde beschrijving van Module 3, zoals het doel, hoe het werkt en hoe het waarde biedt aan de gebruiker.",
+      "views": {
+        "view_1": "Weergave 1",
+        "view_2": "Weergave 2",
+        "view_3": "Weergave 3",
+        "view_4": "Weergave 4",
+        "view_5": "Weergave 5"
+      }
+    },
+    "labs": {
+      "title": "Laboratoria",
+      "subtitle": "Laboratoria",
+      "description": "Experimentele toepassingen voor onderzoeks- en ontwikkelingsdoeleinden",
+      "section": "Beheer",
+      "views": {
+        "sample_form": "Voorbeeldformulier",
+        "send_email": "E-mail verzenden",
+        "record_manager": "Recordbeheerder",
+        "dashboard": "Dashboard",
+        "echarts": "Echarts",
+        "doc_animation": "Documentanimatie",
+        "sandbox": "Sandbox"
+      }
+    }
+}

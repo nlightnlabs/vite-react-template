@@ -1,5 +1,4 @@
 import {useState, useEffect} from 'react'
-import {useNavigate } from 'react-router-dom';
 import {useDispatch, useSelector} from 'react-redux'
 import {setCurrentUser, setTheme} from '../redux/slices/mainSlice.js'
 import * as formatValue from '../functions/formatValue.ts'
@@ -55,7 +54,7 @@ const Settings = () => {
       dbName: config.dbName
     }
     try{
-      const response = await mainApi.updateRecord(payload)
+      const response = await mainApi.updateRecords(payload)
       dispatch(setCurrentUser(response))
       setProfileUpdateSuccess("Profile successfully updated.")
     }catch(error){

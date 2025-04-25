@@ -1,0 +1,56 @@
+{
+    "module_1": {
+      "title": "Modul 1",
+      "subtitle": "Untertitel 1",
+      "section": "Anwendungen",
+      "description": "Dies ist eine detaillierte Beschreibung des Moduls 1, wie sein Zweck, wie es funktioniert und welchen Nutzen es dem Benutzer bietet.",
+      "views": {
+        "view_1": "Ansicht 1",
+        "view_2": "Ansicht 2",
+        "view_3": "Ansicht 3",
+        "view_4": "Ansicht 4",
+        "view_5": "Ansicht 5"
+      }
+    },
+    "module_2": {
+      "title": "Modul 2",
+      "subtitle": "Untertitel 2",
+      "section": "Anwendungen",
+      "description": "Dies ist eine detaillierte Beschreibung des Moduls 2, wie sein Zweck, wie es funktioniert und welchen Nutzen es dem Benutzer bietet.",
+      "views": {
+        "view_1": "Ansicht 1",
+        "view_2": "Ansicht 2",
+        "view_3": "Ansicht 3",
+        "view_4": "Ansicht 4",
+        "view_5": "Ansicht 5"
+      }
+    },
+    "module_3": {
+      "title": "Modul 3",
+      "subtitle": "Untertitel 3",
+      "section": "Anwendungen",
+      "description": "Dies ist eine detaillierte Beschreibung des Moduls 3, wie sein Zweck, wie es funktioniert und welchen Nutzen es dem Benutzer bietet.",
+      "views": {
+        "view_1": "Ansicht 1",
+        "view_2": "Ansicht 2",
+        "view_3": "Ansicht 3",
+        "view_4": "Ansicht 4",
+        "view_5": "Ansicht 5"
+      }
+    },
+    "labs": {
+      "title": "Labore",
+      "subtitle": "Labore",
+      "section": "Verwaltung",
+      "description": "Experimentelle Anwendungen für Forschungs- und Entwicklungszwecke",
+      "views": {
+        "sample_form": "Beispielformular",
+        "send_email": "E-Mail senden",
+        "record_manager": "Datensatz-Manager",
+        "dashboard": "Dashboard",
+        "echarts": "Echarts",
+        "doc_animation": "Dokumentanimation",
+        "sandbox": "Sandbox"
+      }
+    }
+}

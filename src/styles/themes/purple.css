@@ -1,5 +1,6 @@
+
+
 .purple {
-    --font-size: 14px;
     --background-color: rgb(255, 255, 255);
     --secondary-background-color: rgb(245,245,245);
     --tertiary-background-color: rgb(235,235,235);
@@ -84,4 +85,21 @@
     --chat-color: rgb(0,100,200);
     --chat-background-color: white;
     --chat-border: 1px solid rgb(235,235,235);
+    --file-drop-background: repeating-linear-gradient(
+      45deg,
+      #f0f0f0,
+      #f0f0f0 10px,
+      #ffffff 10px,
+      #ffffff 20px
+    );
+
+  --chart-title-color : black;
+  --chart-subtitle-color: gray;
+  --chart-labels-color: gray;
+  --chart-horizontal-axis-title-color: black;
+  --chart-vertical-axis-title-color: black;
+  --chart-vertical-axis-color: rgb(200,200,200);
+  --chart-hoirzontal-axis-color: rgb(200,200,200);
+  --chart-grid-color: rgb(200,200,200);
+  --chart-legend-color: rgb(200,200,200);
   }

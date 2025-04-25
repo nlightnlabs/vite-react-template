@@ -1,9 +1,13 @@
+import { useTranslation } from "react-i18next"
+import "../../i18n.ts"
 const View1 = () => {
+
+  const {t} = useTranslation("modules")
   
   return (
     <div className="w-full h-[100%] p-5 overflow-y-auto fade-in">
       
-      <label className="subtitle">View 1</label>
+      <label className="subtitle">{t("module_1.views.view_1")}</label>
       
       <div className="panel w-full h-[300px] justify-center items-center bg-[var(--tertiary-color)]">
       
